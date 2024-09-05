@@ -148,7 +148,6 @@ $$
 $$
 
 $$
-=
 \displaylines{
    \frac {\delta L}{\delta a_i} =
    \frac {\delta}{\delta a_i}
