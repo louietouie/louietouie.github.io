@@ -1,0 +1,8 @@
+// need to use !important to override the default mjx-container[jax="CHTML"][display="true"] selector
+
+.MathJax[display] {
+    background-color: hsl(195, 25, 35);
+    color: hsl(195, 5, 80);
+    border-radius: 1em;
+    padding: 1rem;
+}
