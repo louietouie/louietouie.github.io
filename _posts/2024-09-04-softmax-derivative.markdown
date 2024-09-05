@@ -148,9 +148,8 @@ $$
 $$
 
 $$
-
+=
 \displaylines{
-
    \frac {\delta L}{\delta a_i} =
    \frac {\delta}{\delta a_i}
       \left(\begin{align*}
@@ -163,7 +162,6 @@ $$
    \\ = -y_i + y_i p_i + \sum_{k \neq i} y_k p_i
    \\ = -y_i +  \sum y_k p_i \\= - y_i + p_i
    \\ = p_i - y_i = \textcolor{orange}{\text{predicted - actual}}
-
 }
 $$
 
