@@ -8,11 +8,13 @@ categories: jekyll update
 <script type="text/javascript" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
 <link rel="stylesheet" href="/assets/css/styles.css">
 
+<iframe width="840" height="473" src="https://www.youtube.com/embed/nJ4u9zheaY8" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+
+<br /><br /><br />
+
 ## 🌑︎ : Background
 
 Cartpole is a common system to model in control theory. The inverted pendulum is unstable (it falls from it's upright position over time), but can be made stable when put on a controllable cart. For the last couple of weeks I've been learning about common control algorithms (PID, LQR, and Kalman Filtering) and applying them to a 3D printed cartpole system.
-
-<!-- <iframe width="840" height="473" src="https://www.youtube.com/embed/IQf-vtIC-Uc" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe> -->
 
 <!-- **State Variables**
 
@@ -38,6 +40,8 @@ $$
 }
 $$ -->
 
+<br /><br /><br />
+
 ## 🌒︎ : PID Controller
 
 #### PID Basics
@@ -57,6 +61,8 @@ In reality, the P, I, and D terms all have constants $$K_p$$, $$K_i$$, and $$K_d
 #### Cartpole + PID
 
 Hand tuned PD ($$K_i$$ = 0) worked OK with the 3D printed cartpole. However, because the controller only cares about the angle of the pole, and not the position of the cart, the cart would slowly drift over time until it hit the endstops.
+
+<br /><br /><br />
 
 ## 🌓︎ : Full State Feedback (Pole Placement)
 
@@ -84,15 +90,36 @@ The 3rd one is the one that most accurately represents my system.
 
 ![Softmax Diagram](/assets/images/softmax.svg)
 
+#### Stability
+The eigenvalues of the A matrix can be used to determ wether the system is stable. If any eigenvalue has a positive real part, the system is unstable. While we can't change the A matrix itself without changing the physical 3D cartpole system, we can directly change the control inputs *u* into the system, which allows the system to behave like A-BK.
+
+$$
+\displaylines {
+   \dot{x} = Ax + Bu
+   \\ u = -Kx
+   \\ \dot{x} = Ax + B(-Kx)
+   \\ \dot{x} = (A-BK)x
+}
+$$
+
+So the goal is now to make the real parts of the eigenvalues of A-BK negative. We can place the eigenvalues of A-BK if A and B are controllable.
+
 Eigenvalues (positive poles) + Pole placement A-BK Stability/Instability 
 Controllability/Observability
 Why Linear?
+Why do negative eigenvalues mean stability?
+
+<br /><br /><br />
 
 ## 🌕︎ : LQR
 
 LQR is similar to Pole Placement and uses the same A, B, C, and D matrices, and -Kx control. The difference is how the poles are placed, and therefore how K is created.
 
 LQR adds a Q and R matrix.
+
+Integreation to infinity
+
+<br /><br /><br />
 
 ## 🌖︎ : Other Things I Tried and Mistakes I Made
 
@@ -102,7 +129,7 @@ LQR adds a Q and R matrix.
 
 #### Mistake: Flipped Signs Due to Testing Isolated States
 
-## 🌗︎ : Lingering Questions
+<br /><br /><br />
 
 ## The Physics
 
@@ -198,9 +225,13 @@ $$
 
 ### MatLab: Data Driven Model
 
+<br /><br /><br />
+
 ## 🌗︎ : Lingering Questions
 1. Flipping signs
 2. Trajectory Planning
+
+<br /><br /><br />
 
 ## 🌗︎ : Resources
 1. [Control Bootcamp][1]
