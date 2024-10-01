@@ -43,7 +43,7 @@ matrix dL = axpy_matrix(-1, p, b.y);
 
 #### The Big Picture Explanation
 
-![Softmax Diagram](/assets/images/softmax.svg)
+![Softmax Diagram](/_assets/images/softmax.svg)
 
 #### The Math
 

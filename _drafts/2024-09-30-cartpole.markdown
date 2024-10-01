@@ -1,0 +1,243 @@
+---
+layout: post
+title:  "Cartpole"
+date:   2024-09-30 12:00:00 -0400
+categories: jekyll update
+---
+
+<script type="text/javascript" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+<link rel="stylesheet" href="/assets/css/styles.css">
+
+## 🌑︎ : Background
+
+Cartpole is a common system to model in control theory. The inverted pendulum is unstable (it falls from it's upright position over time), but can be made stable when put on a controllable cart. For the last couple of weeks I've been learning about common control algorithms (PID, LQR, and Kalman Filtering) and applying them to a 3D printed cartpole system.
+
+<!-- <iframe width="840" height="473" src="https://www.youtube.com/embed/IQf-vtIC-Uc" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe> -->
+
+<!-- **State Variables**
+
+$$
+\displaylines{
+   m = \text{mass of pole}
+   \\ M = \text{mass of cart}
+   \\ L = \text{length of pole}
+   \\ G = \text{acceleration of gravity} = -9.8m/s^2
+}
+$$
+
+**Constants**
+
+$$
+\displaylines{
+   x = \text{horizontal position of cart}
+   \\ \dot{x} = \text{horizontal velocity of cart}
+   \\ \ddot{x} = \text{horizontal acceleration of cart}
+   \\ \theta = \text{angle of pole}
+   \\ \dot{\theta} = \text{velocity of pole}
+   \\ \ddot{\theta} = \text{acceleration of pole}
+}
+$$ -->
+
+## 🌒︎ : PID Controller
+
+#### PID Basics
+
+PID is a simple way to control a system. It uses the error of the system to generate a control signal to apply to the system's actuators. For cartpole, the pole's angle from upright is the error, and the actuator is the motor that moves the cart horizontally.
+
+While the feedback signal to the controller from the system is just the error (**P**roportional term), the controller tracks previous errors to calculate both the **I**ntegral and **D**erivative of the position (**PID**).
+
+Say I'm driving towards a stop sign, and I'm 100 feet away. So **P** is 100. I apply 100 units of my gas pedal control to continue to accelerate towards the stop sign. Next loop, I'm 90 feet away. **P** is 90. I apply 90 units of my gas pedal control to continue to accelerate towards the stop sign. This looping continues until I'm 10 feet away. **P** is 10. I apply 10 units of my gas pedal. That's a problem. I'm 10 feet away from a stop sign and still applying gas because I haven't reached it  yet. I overshoot the stop sign, and now I'm -10 feet away from the stop sign. I put the car in reverse and apply 10 units on my gas pedal. You get the point... if I only account for my **P** term, I'm going to keep overshooting my objective.
+
+This is what the **D** term is for, it dampens the oscillations. When I'm 90 feet away, **P** will be 90 and **D** will be 90 - 100 = -10 feet. So in total, I will apply P + D = 80 units on my gas pedal. Not when I'm 10 feet away, and say the loop before I was 25 feet away... **D** will be -15 and **P** will be 10. So my system input P + D will be -5, I'll be braking before I get there.
+
+The **I** term accumulates error over time. Ignoring **D**, say I'm stopped 2 feet away from the stop sign, so I apply 2 units to my gas pedal. But my throttle cable is loose so my pedal has a dead zone, and nothing happens due to this slight press. The **I** term will keep accumulating the error each loop.... 2 + 2 + 2... so 3 loops later P + I = 8 units. So the **I** term helps remove this steady state error... the error this system would have if we just let it run forever.
+
+In reality, the P, I, and D terms all have constants $$K_p$$, $$K_i$$, and $$K_d$$ that need to be tuned so controller accounts for each term differently. For the stop sign example, I'm probably going to want to start braking sooner than when I'm 10 feet away, so we can increase $$K_d$$.
+
+#### Cartpole + PID
+
+Hand tuned PD ($$K_i$$ = 0) worked OK with the 3D printed cartpole. However, because the controller only cares about the angle of the pole, and not the position of the cart, the cart would slowly drift over time until it hit the endstops.
+
+## 🌓︎ : Full State Feedback (Pole Placement)
+
+Pole Placement requires more knowledge of our underlying system than our hand-tuned PID controller. There are two major changes from PID to Pole Placement.
+1. The controller feeds back the full state of the system, not just the error of the system. The control (the motor output) now takes the full state into account (cart position, cart velocity, pole position, pole velocity).
+2. We need a linearized model of the inverted pendulum so that we can optimize how our motor responds to the full state via our new K vector. Our K vector is similar to K_p, K_i, and K_d of PID, except it has 4 values, one for each state variable.
+
+We need to represent our system in this form.
+
+$$
+\displaylines {
+   \dot{x} = Ax + Bu
+   \\ y = Cx + Du
+}
+$$
+
+Here, x is the state vector, and u is the input vector. **A** describes how our system will change given it's current state, and **B** describes how the motor inputs will change the system. **C** describes what the sensors will read given a current state x, and **D** is a feedthrough term that allows our motor inputs to directly affect the output to our controller. Cartpole doesn't need **D**, and I also don't have a good understanding of it anyways.
+
+Below are 4 different models of Cartpole. The math to create these is [below](#the-physics).
+1. Inverted pendulum with a point mass (all mass concentrated at one point, L distance from the cart. No friction.)
+2. Inverted pendulum with a point mass and stepper motor (which has a holding force unlike a DC motor)
+3. Inverted pendulum with a rod and stepper motor (which now includes inertia)
+4. Data fit system.
+The 3rd one is the one that most accurately represents my system.
+
+![Softmax Diagram](/assets/images/softmax.svg)
+
+Eigenvalues (positive poles) + Pole placement A-BK Stability/Instability 
+Controllability/Observability
+Why Linear?
+
+## 🌕︎ : LQR
+
+LQR is similar to Pole Placement and uses the same A, B, C, and D matrices, and -Kx control. The difference is how the poles are placed, and therefore how K is created.
+
+LQR adds a Q and R matrix.
+
+## 🌖︎ : Other Things I Tried and Mistakes I Made
+
+#### Kalman Filter
+
+#### Filtered Inputs
+
+#### Mistake: Flipped Signs Due to Testing Isolated States
+
+## 🌗︎ : Lingering Questions
+
+## The Physics
+
+### Newtonian: Point Mass Inverted Pendulum
+
+Here are the system of equations for a classical inverted pendulum with a point mass, AKA all the mass of the pendulum is concentrated at a single point at length L from the cart. The axes of interest are the horizontal forces on the cart, and the horizontal and vertical forces on the ball (the vertical forces on the cart will give us no useful information... the normal force and gravitational force just cancel out, and the cart doesn't move vertically).
+
+**Cart Horizontal**
+
+$$
+\displaylines{
+   \text{Force} = \text{mass}*\text{acceleration}
+   \\ \text{horz force of motor} - \text{horz force of pole} = \text{mass of cart}*\text{acceleration of cart}
+   \\ F_u - T\sin\theta = M\ddot{x}
+}
+$$
+
+**Ball Horizontal**
+
+$$
+\displaylines{
+   \text{Force} = \text{mass}*\text{acceleration}
+   \\ \text{horz force of pole} = \text{mass of pole}*\text{horz acceleration of pole}
+   \\ T\sin\theta = ma_{horizontal}
+   \\ a_{horizontal} = a_{horz-acc-of-cart} + a_{horz-acc-of-pole-w.r.t-cart}
+   \\ a_{horz-acc-of-pole-w.r.t-cart} = a_{horz-angular-acc} + a_{horz-centrifugal-acc}
+   \\ a_{horizontal} = \ddot{x} - L\ddot{\theta}\cos\theta + L\dot{\theta}^2\sin{\theta}
+   \\ T\sin\theta = m(\ddot{x} - L\ddot{\theta}\cos\theta + L\dot{\theta}^2\sin{\theta})
+}
+$$
+
+**Ball Vertical**
+
+$$
+\displaylines{
+   \text{Force} = \text{mass}*\text{acceleration}
+   \\ \text{force of gravity} - \text{vert force of pole} = \text{mass of pole}*\text{vert acceleration of pole}
+   \\ mg - T\cos\theta = ma_{vertical}
+   \\ a_{vertical} = -a_{vert-angular-acc} - a_{vert-centrifugal-acc}
+   \\ a_{vertical} = -L\ddot{\theta}\sin\theta - L\dot{\theta}^2\cos{\theta}
+   \\ mg - T\cos\theta = m(-L\ddot{\theta}\sin\theta - L\dot{\theta}^2\cos{\theta})
+   \\ -T\cos\theta = m(-L\ddot{\theta}\sin\theta - L\dot{\theta}^2\cos{\theta} - g)
+}
+$$
+
+**Simplifying: Removing T**
+
+$$
+\displaylines{
+   \\ -T\cos\theta = m(-L\ddot{\theta}\sin\theta - L\dot{\theta}^2\cos{\theta} - g)
+   \\ T\sin\theta = m(\ddot{x} - L\ddot{\theta}\cos\theta + L\dot{\theta}^2\sin{\theta})
+   \\
+   \\ \sin\theta(-T\cos\theta) = \sin\theta(m(-L\ddot{\theta}\sin\theta + L\dot{\theta}^2\cos{\theta} - g))
+   \\ \cos\theta(T\sin\theta) = \cos\theta(m(\ddot{x} - L\ddot{\theta}\cos\theta + L\dot{\theta}^2\sin{\theta}))  
+   \\
+   \\ 0 = \ddot{x}\cos{\theta} - L\ddot{\theta} - g\sin{\theta}
+   \\
+   \\ F_u - T\sin\theta = M\ddot{x}
+   \\ F_u - (m(\ddot{x} - L\ddot{\theta}\cos\theta + L\dot{\theta}^2\sin{\theta})) = M\ddot{x}
+   \\ F_u + mL\ddot{\theta}\cos\theta - mL\dot{\theta}^2\sin^2{\theta} = (M+m)\ddot{x}
+}
+$$
+
+**Isolating $$\ddot{x}$$**
+
+$$
+\displaylines{
+   \\ \ddot{\theta} = \frac{\ddot{x}\cos{\theta} - g\sin{\theta}}{L}
+   \\ F_u + mL(\frac{\ddot{x}\cos{\theta} - g\sin{\theta}}{L})\cos\theta - mL\dot{\theta}^2\sin^2{\theta} = (M+m)\ddot{x}
+   \\ \frac{F_u - mg\sin{\theta}\cos{\theta}-mL\dot{\theta}\sin^2{\theta}} {M + m(1-\cos^2{\theta})} = \ddot{x}
+}
+$$
+
+**Isolating $$\ddot{\theta}$$**
+
+$$
+\displaylines{
+   \\ \ddot{x} = \frac{L\ddot{\theta} + g\sin{\theta}}{\cos{\theta}}
+   \\ F_u + mL\ddot{\theta}\cos\theta - mL\dot{\theta}^2\sin^2{\theta} = (M+m)\frac{L\ddot{\theta} + g\sin{\theta}}{\cos{\theta}}
+   \\ \frac {F_u\cos{\theta} + mL\ddot{\theta}\cos^2{\theta} - mL\dot{\theta}\sin^2{\theta}{\cos\theta} - (M+m)g\sin\theta} {L(M+m)} = \ddot{\theta}
+}
+$$
+
+### Linearization: Creating the A and B Matrices.
+
+<div id="chart"></div>
+
+### Newtonian: Point Mass Inverted Pendulum with Stepper Motor
+
+### Lagrangian: Rod Inverted Pendulum (added inertia)
+
+### Lagrangian: Rod Inverted Pendulum (added inertia) with Stepper Motor
+
+### MatLab: Data Driven Model
+
+## 🌗︎ : Lingering Questions
+1. Flipping signs
+2. Trajectory Planning
+
+## 🌗︎ : Resources
+1. [Control Bootcamp][1]
+
+<!-- links -->
+[1]: https://www.youtube.com/playlist?list=PLMrJAkhIeNNR20Mz-VpzgfQs5zrYi085m
+
+<!-- script -->
+
+<style>
+
+/* Bar Chart */
+.bar {
+  fill: steelblue;
+}
+
+.bar:hover {
+  fill: brown;
+}
+
+.axis {
+  font: 10px sans-serif;
+}
+
+.axis path,
+.axis line {
+  fill: none;
+  stroke: #000;
+  shape-rendering: crispEdges;
+}
+
+.x.axis path {
+  display: none;
+}
+
+</style>
+
+<script src="//d3js.org/d3.v7.min.js"></script>
+<script src="{% link assets/js/linearization.js %}" type="text/javascript"></script>
+
