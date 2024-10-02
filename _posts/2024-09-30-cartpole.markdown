@@ -183,7 +183,7 @@ def updateState(self, Z_measurements):
 </code>
 </pre>
 
-I still have a bit of confusion about mapping A to F here... I probably shouldn't need both F and Fx. Additionally, I'm not sure if Kalman is the right choice here, because $$\theta$$ tends to drift one way, so it's error will be biased towards one side of the mean. This isn't great because the Kalman filter assumes the error is [normally distributed](#https://en.wikipedia.org/wiki/Kalman_filter).
+I still have a bit of confusion about mapping A to F here... I probably shouldn't need both F and Fx. Additionally, I'm not sure if Kalman is the right choice here, because $$\theta$$ tends to drift one way, so it's error will be biased towards one side of the mean. This isn't great because the Kalman filter assumes the error is [normally distributed](https://en.wikipedia.org/wiki/Kalman_filter).
 
 #### Filtered Inputs
 
@@ -352,8 +352,8 @@ $$
    \\ x(t) = e^{TDT^{-1}t}x(0) = Te^{Dt}T^{-1}x(0)
 }
 $$
-
-So we can see here, that if any of our eigenvalues are positive, D will have a position value in it, and e^{Dt} will explode to massive values over time. This is why stable systems require that all of the eigenvalues are negative. The video linked above also shows that when transformed to discrete time, all the eigenvalues must be less than 1 for the system to be stable.
+x
+So we can see here, that if any of our eigenvalues are positive, D will have a positive value in it, and $$e^{Dt}$$ will explode to massive values over time. This is why stable systems require that all of the eigenvalues are negative. The video linked above also shows that when transformed to discrete time, all the eigenvalues must be less than 1 for the system to be stable.
 
 <!-- and discrete time, >1 -->
 
