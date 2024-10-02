@@ -272,7 +272,7 @@ $$
 \displaylines{
    \\ \ddot{x} = \frac{L\ddot{\theta} + g\sin{\theta}}{\cos{\theta}}
    \\ F_u + mL\ddot{\theta}\cos\theta - mL\dot{\theta}^2\sin^2{\theta} = (M+m)\frac{L\ddot{\theta} + g\sin{\theta}}{\cos{\theta}}
-   \\ \frac {F_u\cos{\theta} + mL\ddot{\theta}\cos^2{\theta} - mL\dot{\theta}\sin^2{\theta}{\cos\theta} - (M+m)g\sin\theta} {L(M+m)} = \ddot{\theta}
+   \\ \frac {F_u\cos{\theta} - mL\dot{\theta}\sin^2{\theta}{\cos\theta} - (M+m)g\sin\theta} {L(M+m(1-\cos^2\theta))} = \ddot{\theta}
 }
 $$
 
@@ -281,7 +281,10 @@ $$
 
 The system needs to be stable in it's upright position.
 
-$$ x = \begin{bmatrix} 0 & 0 & \pi & 0 \end{bmatrix} $$
+$$ \displaylines{
+   x = \begin{bmatrix} x & \dot{x} & \theta & \dot{\theta} \end{bmatrix}
+   \\  x = \begin{bmatrix} 0 & 0 & \pi & 0 \end{bmatrix}
+}$$
 
 For full state feedback (both pole placement and LQR), we need a linear system, but our current system often takes the sin and cos of $$\theta$$, and $$\theta$$ is not a constant. So we need to estimate a linearization of sin and cos near the point where our system will exist: upright.
 
@@ -301,12 +304,14 @@ $$
    \frac{F_u - mg\sin{\theta}\cos{\theta}-mL\dot{\theta}\sin^2{\theta}} {M + m(1-\cos^2{\theta})} = \ddot{x}
    \\ \frac{F_u - mg{\theta}} {M} \approx \ddot{x}
    \\
-   \\ \frac {F_u\cos{\theta} + mL\ddot{\theta}\cos^2{\theta} - mL\dot{\theta}\sin^2{\theta}{\cos\theta} - (M+m)g\sin\theta} {L(M+m)} = \ddot{\theta}
-   \\ \frac {-F_u + (M+m)g\theta} {L(M+m)} \approx \ddot{\theta}
+   \\ \frac {F_u\cos{\theta} - mL\dot{\theta}\sin^2{\theta}{\cos\theta} - (M+m)g\sin\theta} {L(M+m(1-\cos^2\theta))} = \ddot{\theta}
+   \\ \frac {F_u - (M+m)g\theta} {LM} \approx \ddot{\theta}
 }
 $$
 
 Now, we get the far left [A and B matrices](#cartpolelinearsystem-image-bookmark) by taking the derivative of these w.r.t. each of the state components.
+
+Question: why does $$-mL\dot{\theta}\sin^2{\theta}$$ reduce to 0 when linearized? While $$\dot{\theta}$$ is 0 at stable, can't we just keep in $$\dot{\theta}$$ as a linear term like we do with $$\theta$$?
 
 <!-- ### Newtonian: Point Mass Inverted Pendulum with Stepper Motor
 
@@ -352,7 +357,7 @@ $$
    \\ x(t) = e^{TDT^{-1}t}x(0) = Te^{Dt}T^{-1}x(0)
 }
 $$
-x
+
 So we can see here, that if any of our eigenvalues are positive, D will have a positive value in it, and $$e^{Dt}$$ will explode to massive values over time. This is why stable systems require that all of the eigenvalues are negative. The video linked above also shows that when transformed to discrete time, all the eigenvalues must be less than 1 for the system to be stable.
 
 <!-- and discrete time, >1 -->
