@@ -1,0 +1,400 @@
+---
+layout: post
+title:  "Cartpole"
+date:   2024-09-30 12:00:00 -0400
+categories: jekyll update
+---
+
+<script type="text/javascript" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+<link rel="stylesheet" href="/assets/css/styles.css">
+
+<iframe width="840" height="473" src="https://www.youtube.com/embed/nJ4u9zheaY8" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+
+<hr style = "margin-top: 4rem">
+<br /><br />
+
+## 🌑︎ : Background
+
+Cartpole is a common system to model in control theory. The inverted pendulum is unstable (it falls from it's upright position over time), but can be made stable when put on a controllable cart. For the last couple of weeks I've been learning about common control algorithms (PID, LQR, and Kalman Filtering) and applying them to a 3D printed cartpole system.
+<hr style = "margin-top: 4rem">
+<br /><br />
+
+## 🌒︎ : PID Controller
+
+#### PID Basics
+
+PID is a simple way to control a system. It uses the error of the system to generate a control signal to apply to the system's actuators. For cartpole, the pole's angle from upright is the error, and the actuator is the motor that moves the cart horizontally.
+
+While the feedback signal to the controller from the system is just the error (**P**roportional term), the controller tracks previous errors to calculate both the **I**ntegral and **D**erivative of the position (**PID**).
+
+<div style="padding:1rem; margin-bottom:2rem; margin-top:2rem; background-color:#c2cbce">
+
+<p>A car is moving towards a stop sign, and is 100 feet away. So P is 100. The driver applies 100 units on the gas pedal to continue to move towards the stop sign. Next loop, the car is 90 feet away. P is 90, so 90 units of gas pedal is applied. This looping continues until the car is 10 feet away. P is 10. That's a problem. The car is 10 feet away from the stop sign and still applying gas. The car overshoots the stop sign, and is now -10 feet away from the stop sign. The driver puts the car in reverse and applies 10 units of gas. If the driver only accounts for the P term, they will keep overshooting the objective.</p>
+
+<p>This is what the D term is for, it dampens the oscillations. When the driver is 90 feet away, P will be 90 and D will be 90 - 100 = -10 feet. So in total, P + D = 80 units of gas pedal will be applied. Not when the drive is 10 feet away, and say the loop before was 25 feet away... D will be -15 and P will be 10. So the system input P + D will be -5; the driver will be braking before I get there.</p>
+
+<p>The I term accumulates error over time. Ignoring D, say the driver is stopped 2 feet away from the stop sign, so applies 2 units to my gas pedal. But my throttle cable is loose so the pedal has a dead zone and this slight press does nothing. The I term will keep accumulating the error each loop.... 2 + 2 + 2... so 3 loops later P + I = 8 units. So the I term helps remove this steady state error; the error this system would have if we just let it run forever.</p>
+</div>
+
+In reality, the P, I, and D terms all have constants $$K_p$$, $$K_i$$, and $$K_d$$ that need to be tuned so controller accounts for each term differently. For the stop sign example, I'm probably going to want to start braking sooner than when I'm 10 feet away, so we can increase $$K_d$$.
+
+#### Cartpole + PID
+
+Hand tuned PD ($$K_i$$ = 0) worked ok with the 3D printed cartpole. However, because a PD controller only cares about the angle of the pole, and not the position of the cart, the cart would slowly drift over time until it hit the endstops.
+
+<hr style = "margin-top: 4rem">
+<br /><br />
+
+## 🌓︎ : Full State Feedback (Pole Placement)
+
+Pole Placement requires more knowledge of our underlying system than our hand-tuned PD controller. There are two major changes from PID to Pole Placement.
+1. The controller feeds back the **full state** of the system, not just the **error** of the system. The control (the motor output) now takes the full state into account (cart position, cart velocity, pole position, pole velocity).
+2. We need a linearized model of the inverted pendulum so that we can optimize how our motor responds to the full state via our new K vector. Our K vector is similar to $$K_p$$, $$K_i$$, and $$K_d$$ of PID, except it has 4 values, one for each state variable.
+
+Our linearized model will be of the form...
+
+$$
+\displaylines {
+   \dot{x} = Ax + Bu
+   \\ y = Cx + Du
+}
+$$
+
+Here, x is the state vector, and u is the input vector. **A** describes how our system will change given it's current state, and **B** describes how the motor inputs will change the system. **C** describes what the sensors will read given a current state x, and **D** is a feedthrough term that allows our motor inputs to directly affect the output to our controller. Cartpole doesn't need **D**, and I also don't have a good understanding of it anyways.
+
+$$
+\displaylines{
+   A = \begin{bmatrix}
+      \frac{d\dot{x}}{dx} & \frac{d\dot{x}}{d\dot{x}} & \frac{d\dot{x}}{d\theta} & \frac{d\dot{x}}{d\dot{\theta}}
+      \\ \frac{d\ddot{x}}{dx} & \frac{d\ddot{x}}{d\dot{x}} & \frac{d\ddot{x}}{d\theta} & \frac{d\ddot{x}}{d\dot{\theta}}
+      \\ \frac{d\dot{\theta}}{dx} & \frac{d\dot{\theta}}{d\dot{x}} & \frac{d\dot{\theta}}{d\theta} & \frac{d\dot{\theta}}{d\dot{\theta}}
+      \\ \frac{d\ddot{\theta}}{dx} & \frac{d\ddot{\theta}}{d\dot{x}} & \frac{d\ddot{\theta}}{d\theta} & \frac{d\ddot{\theta}}{d\dot{\theta}}
+   \end{bmatrix}
+   \\ B = \begin{bmatrix}
+      \frac{d\dot{x}}{du}
+      \\ \frac{d\ddot{x}}{du}
+      \\ \frac{d\dot{\theta}}{du}
+      \\ \frac{d\ddot{\theta}}{du}
+   \end{bmatrix}
+}
+$$
+
+Here's 4 different models of Cartpole I tried.
+1. Inverted pendulum with a point mass (all mass concentrated at one point, L distance from the cart. No friction.)
+2. Inverted pendulum with a point mass and stepper motor (which has a holding force unlike a DC motor)
+3. Inverted pendulum with a rod and stepper motor (which now includes inertia) (**best representation of the actual system**)
+4. Data fit system.
+
+Each of these 4 models has a different A and B matrix. The math to create these is [here](#the-physics).
+
+<div id="cartpolelinearsystem-image-bookmark"></div>
+![The possible A and B matrices](/assets/images/cartpolelinearsystem.svg)
+
+#### Stability
+The eigenvalues of the above A matrix can be found with <code>eig(A)</code>. For M = 1, m = 0.016, L = 0.145, and g = 9.81, they are...
+
+   - 7.1233
+   - -7.1233
+   - 0
+   - 0
+
+Because we have an eigenvalue with a positive real part, the system is unstable ([here's why](#why-are-continuous-systems-with-positive-eigenvalues-unstable)), and the pole will fall. While we can't change the A matrix itself without changing the physical 3D cartpole system, we can directly change the control inputs *u* into the system, which allows the system to behave like A-BK.
+
+$$
+\displaylines {
+   \dot{x} = Ax + Bu
+   \\ u = -Kx
+   \\ \dot{x} = Ax + B(-Kx)
+   \\ \dot{x} = (A-BK)x
+}
+$$
+
+So the goal is now to make the real parts of the eigenvalues of A-BK negative.
+
+<pre>
+<code>desired_eigenvalues = [-1.4, -1.5, -1.6, -1.7];
+K = place(A, B, desired_eigenvalues);
+eig(A-B*K)</code>
+</pre>
+
+This gives $$K = \begin{bmatrix}-0.1126 && -0.2920 && 12.6138 && 1.2551\end{bmatrix}$$, and the eigenvalues of A-BK are $$\begin{bmatrix}-1.4 && -1.5 && -1.6 && -1.7\end{bmatrix}$$ as we requested. While A-BK is stable, these eigenvalues I hand-picked might not be optimal. Choosing optimal eigenvalues is what LQR is for.
+
+Note: we can place the eigenvalues of A-BK anywhere if and only if A and B are [controllable](#what-are-controllablility-and-observability).
+
+<hr style = "margin-top: 4rem">
+<br /><br />
+
+## 🌕︎ : [LQR][2]
+
+LQR is similar to Pole Placement and uses the same A, B, C, and D matrices, and -Kx control. The difference is how the poles are placed, and therefore how K is created.
+
+$$ \text{LQR Cost Function} = J = \int_0^{\infty} (x^TQx + u^TRu)dt$$
+
+The goal of LQR is to minimize this cost function. Q and R are both diagonal matrices that are multiplied by state vector x and input vector u. I think that by multiplying by both x^T and x, the effect is similar to squaring, so our end loss penalties will always be positive.
+
+The Q matrix penalizes the system's deviation from the reference state. So increasing Q values, say for x (cart position), will result in a K vector that prioritizes keeping the cart in the middle.
+
+A higher R value (for cartpole, R is a single value since there is only one actuator) will penalize actuator inputs more, so the cart will not be so aggressive in corrections. Increasing the R value can be useful in a system where actuator movement is expensive, say if you have limited fuel.
+
+Here are the Q and R matrixes I used...
+
+$$
+\displaylines{
+   Q = \begin{bmatrix} 100 & 0 & 0 & 0 \\ 0 & 25 & 0 & 0 \\ 0 & 0 & 50 & 0 \\ 0 & 0 & 0 & 10 \end{bmatrix}
+   \\ R = \begin{bmatrix} 5 \end{bmatrix}
+}
+$$
+
+Using these, running <code>K = lqr(A, B, C, D)</code> in Matlab returns the optimal K vector.
+
+$$ K = \begin{bmatrix} -4.0541 & -4.6412 & 30.9005 & 4.5055 \end{bmatrix} $$
+
+Except I had to flip the values of the first two terms, and [I'm not sure why](#question-bookmark).
+
+The final result in the youtube video uses...
+1. This K vector
+2. A low-pass filter on $$\dot{\theta}$$ (measured using [constant-time][4], not constant-position)
+3. [FastAccelStepper][3] to control the stepper motor and report stepper position and speed
+
+<hr style = "margin-top: 4rem">
+<br /><br />
+
+## 🌖︎ : Other Things I Tried and Mistakes I Made
+
+#### Kalman Filter
+
+When some of the K vectors I tried failed to stablize the system (due to flipped signs, which I didn't realize at the time), one thing I tried was using a Kalman filter. My thinking was that maybe the arduino was missing pulses from the encoder, so $$\theta$$ may drift over time. I had trouble running Kalman on an Arduino without running out of memory, so I setup serial communication between the arduino and a python script on my mac.
+
+<pre>
+<code>
+def predictState(self, U_input):
+   dt = self.updateTime()
+   F = np.eye(4) + (self.A * dt) // Euler method
+   Fx = self.X_both + (self.A @ (self.X_both - self.reference) * dt)
+   G = self.B * dt
+   self.X_model = Fx + G @ U_input
+   self.P_model = (F @ self.P_both @ F.T) + self.Q_disturbance # plus old P_both since dt?
+   self.K_ratio = self.P_model @ self.C.T @ np.linalg.inv(self.C @ self.P_model @ self.C.T + self.R_noise)
+
+def updateState(self, Z_measurements):
+   self.X_both = self.X_model + (self.K_ratio @ (Z_measurements - (self.C @ self.X_model)))
+   self.P_both = (self.I - (self.K_ratio @ self.C)) @ self.P_model
+   return self.X_both
+</code>
+</pre>
+
+I still have a bit of confusion about mapping A to F here... I probably shouldn't need both F and Fx. Additionally, I'm not sure if Kalman is the right choice here, because $$\theta$$ tends to drift one way, so it's error will be biased towards one side of the mean. This isn't great because the Kalman filter assumes the error is [normally distributed](#https://en.wikipedia.org/wiki/Kalman_filter).
+
+#### Filtered Inputs
+
+Adding a low-pass filter to $${\dot{\theta}}$$ helped.
+
+<!-- #### Mistake: Flipped Signs Due to Testing Isolated States -->
+
+<hr style = "margin-top: 4rem">
+<br /><br />
+
+## The Physics
+
+### Newtonian: Point Mass Inverted Pendulum
+
+Here are the system of equations for a classical inverted pendulum with a point mass, AKA all the mass of the pendulum is concentrated at a single point at length L from the cart. The axes of interest are the horizontal forces on the cart, and the horizontal and vertical forces on the ball (the vertical forces on the cart will give us no useful information... the normal force and gravitational force just cancel out, and the cart doesn't move vertically).
+
+**Cart Horizontal**
+
+$$
+\displaylines{
+   \text{Force} = \text{mass}*\text{acceleration}
+   \\ \text{horz force of motor} - \text{horz force of pole} = \text{mass of cart}*\text{acceleration of cart}
+   \\ F_u - T\sin\theta = M\ddot{x}
+}
+$$
+
+**Ball Horizontal**
+
+$$
+\displaylines{
+   \text{Force} = \text{mass}*\text{acceleration}
+   \\ \text{horz force of pole} = \text{mass of pole}*\text{horz acceleration of pole}
+   \\ T\sin\theta = ma_{horizontal}
+   \\ a_{horizontal} = a_{horz-acc-of-cart} + a_{horz-acc-of-pole-w.r.t-cart}
+   \\ a_{horz-acc-of-pole-w.r.t-cart} = a_{horz-angular-acc} + a_{horz-centrifugal-acc}
+   \\ a_{horizontal} = \ddot{x} - L\ddot{\theta}\cos\theta + L\dot{\theta}^2\sin{\theta}
+   \\ T\sin\theta = m(\ddot{x} - L\ddot{\theta}\cos\theta + L\dot{\theta}^2\sin{\theta})
+}
+$$
+
+**Ball Vertical**
+
+$$
+\displaylines{
+   \text{Force} = \text{mass}*\text{acceleration}
+   \\ \text{force of gravity} - \text{vert force of pole} = \text{mass of pole}*\text{vert acceleration of pole}
+   \\ mg - T\cos\theta = ma_{vertical}
+   \\ a_{vertical} = -a_{vert-angular-acc} - a_{vert-centrifugal-acc}
+   \\ a_{vertical} = -L\ddot{\theta}\sin\theta - L\dot{\theta}^2\cos{\theta}
+   \\ mg - T\cos\theta = m(-L\ddot{\theta}\sin\theta - L\dot{\theta}^2\cos{\theta})
+   \\ -T\cos\theta = m(-L\ddot{\theta}\sin\theta - L\dot{\theta}^2\cos{\theta} - g)
+}
+$$
+
+**Simplifying: Removing T**
+
+$$
+\displaylines{
+   \\ -T\cos\theta = m(-L\ddot{\theta}\sin\theta - L\dot{\theta}^2\cos{\theta} - g)
+   \\ T\sin\theta = m(\ddot{x} - L\ddot{\theta}\cos\theta + L\dot{\theta}^2\sin{\theta})
+   \\
+   \\ \sin\theta(-T\cos\theta) = \sin\theta(m(-L\ddot{\theta}\sin\theta + L\dot{\theta}^2\cos{\theta} - g))
+   \\ \cos\theta(T\sin\theta) = \cos\theta(m(\ddot{x} - L\ddot{\theta}\cos\theta + L\dot{\theta}^2\sin{\theta}))  
+   \\
+   \\ 0 = \ddot{x}\cos{\theta} - L\ddot{\theta} - g\sin{\theta}
+   \\
+   \\ F_u - T\sin\theta = M\ddot{x}
+   \\ F_u - (m(\ddot{x} - L\ddot{\theta}\cos\theta + L\dot{\theta}^2\sin{\theta})) = M\ddot{x}
+   \\ F_u + mL\ddot{\theta}\cos\theta - mL\dot{\theta}^2\sin^2{\theta} = (M+m)\ddot{x}
+}
+$$
+
+**Isolating $$\ddot{x}$$**
+
+$$
+\displaylines{
+   \\ \ddot{\theta} = \frac{\ddot{x}\cos{\theta} - g\sin{\theta}}{L}
+   \\ F_u + mL(\frac{\ddot{x}\cos{\theta} - g\sin{\theta}}{L})\cos\theta - mL\dot{\theta}^2\sin^2{\theta} = (M+m)\ddot{x}
+   \\ \frac{F_u - mg\sin{\theta}\cos{\theta}-mL\dot{\theta}\sin^2{\theta}} {M + m(1-\cos^2{\theta})} = \ddot{x}
+}
+$$
+
+**Isolating $$\ddot{\theta}$$**
+
+$$
+\displaylines{
+   \\ \ddot{x} = \frac{L\ddot{\theta} + g\sin{\theta}}{\cos{\theta}}
+   \\ F_u + mL\ddot{\theta}\cos\theta - mL\dot{\theta}^2\sin^2{\theta} = (M+m)\frac{L\ddot{\theta} + g\sin{\theta}}{\cos{\theta}}
+   \\ \frac {F_u\cos{\theta} + mL\ddot{\theta}\cos^2{\theta} - mL\dot{\theta}\sin^2{\theta}{\cos\theta} - (M+m)g\sin\theta} {L(M+m)} = \ddot{\theta}
+}
+$$
+
+<hr style="border:dashed 1px;margin-top:2rem;margin-bottom:2rem">
+### Linearization: Creating the A and B Matrices.
+
+The system needs to be stable in it's upright position.
+
+$$ x = \begin{bmatrix} 0 & 0 & \pi & 0 \end{bmatrix} $$
+
+For full state feedback (both pole placement and LQR), we need a linear system, but our current system often takes the sin and cos of $$\theta$$, and $$\theta$$ is not a constant. So we need to estimate a linearization of sin and cos near the point where our system will exist: upright.
+
+<div id="chart"></div>
+
+$$
+\displaylines{
+   \cos\theta \approx -1
+   \\ \sin\theta \approx -\theta + \pi
+}
+$$
+
+Note: I'm realizing I ended up subbing $$\sin\theta$$ with $$-\theta$$, not $$-\theta + \pi$$. Maybe this was part of my [sign problem](#question-bookmark)? Either way, the rest of this linearization math uses $$-\theta$$.
+
+$$
+\displaylines{
+   \frac{F_u - mg\sin{\theta}\cos{\theta}-mL\dot{\theta}\sin^2{\theta}} {M + m(1-\cos^2{\theta})} = \ddot{x}
+   \\ \frac{F_u - mg{\theta}} {M} \approx \ddot{x}
+   \\
+   \\ \frac {F_u\cos{\theta} + mL\ddot{\theta}\cos^2{\theta} - mL\dot{\theta}\sin^2{\theta}{\cos\theta} - (M+m)g\sin\theta} {L(M+m)} = \ddot{\theta}
+   \\ \frac {-F_u + (M+m)g\theta} {L(M+m)} \approx \ddot{\theta}
+}
+$$
+
+Now, we get the far left [A and B matrices](#cartpolelinearsystem-image-bookmark) by taking the derivative of these w.r.t. each of the state components.
+
+<!-- ### Newtonian: Point Mass Inverted Pendulum with Stepper Motor
+
+### Lagrangian: Rod Inverted Pendulum (added inertia)
+
+### Lagrangian: Rod Inverted Pendulum (added inertia) with Stepper Motor
+
+### MatLab: Data Driven Model -->
+
+<hr style = "margin-top: 4rem">
+<br /><br />
+
+### Why are continuous systems with positive eigenvalues unstable?
+
+Here's a [good video](https://www.youtube.com/watch?v=nyqJJdhReiA&t=37s) explaining why. In summary...
+
+Apparently this is the general solution to linear systems. I don't intuitively understand why. For continuous systems, it allows you to calculate the state at time t given the initial condition and the A matrix.
+
+$$
+\displaylines{
+   x(t) = e^{At}x(0)
+}
+$$
+
+Just completely guessing, I think an intuitive way to think about it is that because...
+
+$$ e^{At} = I + At + \frac{A^2t^2}{2!} + \frac{A^3t^3}{3!}... $$
+
+via the Taylor Series, when multiplied by the initial state x(0)...
+
+$$ x(t) = x(0) + \frac{At}{1!}x(0) + \frac{A^2t^2}{2!}x(0) + \frac{A^3t^3}{3!}x(0)... $$
+
+Its kind of like we are taking the inital condition, then accounting for a bunch of linear dynamics from 0 to t, then accounting for a bunch of squared dynamics from 0 to t, then cubic, etc. This is a big guess, so if anyone reads this, take that with a grain of salt.
+
+Anyways, given A, say T is a matrix of A's eigenvectors (one per column), and D is a diagonal matrix of A's eigenvalues. Then,
+
+$$ 
+\displaylines{
+   AT = TD
+   \\ A = TDT^{-1}
+   \\
+   \\ x(t) = e^{At}x(0)
+   \\ x(t) = e^{TDT^{-1}t}x(0) = Te^{Dt}T^{-1}x(0)
+}
+$$
+
+So we can see here, that if any of our eigenvalues are positive, D will have a position value in it, and e^{Dt} will explode to massive values over time. This is why stable systems require that all of the eigenvalues are negative. The video linked above also shows that when transformed to discrete time, all the eigenvalues must be less than 1 for the system to be stable.
+
+<!-- and discrete time, >1 -->
+
+<hr style = "margin-top: 4rem">
+<br /><br />
+
+### What are controllablility and observability?
+
+For the system to be controllable, the Controllability matrix below must have full rank. To be observable, the Observability matrix must have full rank.
+
+$$
+\displaylines{
+   \text{Controllability Matrix} = \begin{bmatrix} B & AB & A^2B & A^3B \end{bmatrix}
+   \\ \text{Observability Matrix} = \begin{bmatrix} C \\ CA \\ C^2A \\ C^3A \end{bmatrix}
+}
+$$
+
+<hr style = "margin-top: 4rem">
+<br /><br />
+
+<div id="question-bookmark"></div>
+## 🌗︎ : Lingering Questions 
+1. Why was it necessary for me to flip signs of my final K matrix? Where did I use the wrong signs?
+2. Why are most popular control algorithms designed for linear/linearized systems?
+3. I know that with pole placement, the poles of a system are the same as it's eigenvalues. [Why?](https://dsp.stackexchange.com/questions/24154/why-eigen-values-and-poles-of-a-system-are-equivalent)
+4. Future stuff: Trajectory Planning, Transfer Functions/Laplace
+
+<hr style = "margin-top: 4rem">
+<br /><br />
+
+## 🌗︎ : Resources
+1. [Control Bootcamp][1]: Very good, a lot of the stuff I learned/explained here is just directly from Steve.
+2. [Turn Continuous A into Discrete F][5]
+
+<!-- links -->
+[1]: https://www.youtube.com/playlist?list=PLMrJAkhIeNNR20Mz-VpzgfQs5zrYi085m
+[2]: https://www.youtube.com/watch?v=E_RDCFOlJx4
+[3]: https://github.com/gin66/FastAccelStepper
+[4]: https://www.embeddedrelated.com/showarticle/158.php
+[5]: https://math.stackexchange.com/questions/2157745/state-space-discretization
+
+<script src="//d3js.org/d3.v7.min.js"></script>
+<script src="{% link assets/js/linearization.js %}" type="text/javascript"></script>
+
