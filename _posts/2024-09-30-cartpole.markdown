@@ -242,7 +242,7 @@ $$
 
 $$
 \displaylines{
-   \\ -T\cos\theta = m(-L\ddot{\theta}\sin\theta - L\dot{\theta}^2\cos{\theta} - g)
+   -T\cos\theta = m(-L\ddot{\theta}\sin\theta - L\dot{\theta}^2\cos{\theta} - g)
    \\ T\sin\theta = m(\ddot{x} - L\ddot{\theta}\cos\theta + L\dot{\theta}^2\sin{\theta})
    \\
    \\ \sin\theta(-T\cos\theta) = \sin\theta(m(-L\ddot{\theta}\sin\theta + L\dot{\theta}^2\cos{\theta} - g))
@@ -260,7 +260,7 @@ $$
 
 $$
 \displaylines{
-   \\ \ddot{\theta} = \frac{\ddot{x}\cos{\theta} - g\sin{\theta}}{L}
+   \ddot{\theta} = \frac{\ddot{x}\cos{\theta} - g\sin{\theta}}{L}
    \\ F_u + mL(\frac{\ddot{x}\cos{\theta} - g\sin{\theta}}{L})\cos\theta - mL\dot{\theta}^2\sin^2{\theta} = (M+m)\ddot{x}
    \\ \frac{F_u - mg\sin{\theta}\cos{\theta}-mL\dot{\theta}\sin^2{\theta}} {M + m(1-\cos^2{\theta})} = \ddot{x}
 }
@@ -270,7 +270,7 @@ $$
 
 $$
 \displaylines{
-   \\ \ddot{x} = \frac{L\ddot{\theta} + g\sin{\theta}}{\cos{\theta}}
+   \ddot{x} = \frac{L\ddot{\theta} + g\sin{\theta}}{\cos{\theta}}
    \\ F_u + mL\ddot{\theta}\cos\theta - mL\dot{\theta}^2\sin^2{\theta} = (M+m)\frac{L\ddot{\theta} + g\sin{\theta}}{\cos{\theta}}
    \\ \frac {F_u\cos{\theta} - mL\dot{\theta}\sin^2{\theta}{\cos\theta} - (M+m)g\sin\theta} {L(M+m(1-\cos^2\theta))} = \ddot{\theta}
 }
