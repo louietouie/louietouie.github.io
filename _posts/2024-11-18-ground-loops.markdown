@@ -161,7 +161,7 @@ Planning the wiring has been a bit more difficult than I expected because it has
 
    <div markdown="1" class="pending"></div>
 
-+ **No signal ground wire.** What if we only connect the grounds of the RPi, Arduino, and ODrive power supplies, so they share the same ground voltage for CAN, and then don't include a CAN/signal ground wire? Can ground current flow through CAN HI and CAN LO to create a ground loop?
++ **No signal ground wire.** What if we only connect the grounds of the RPi, Arduino, and ODrive power supplies, so they share the same ground voltage for CAN, and then don't include a CAN/signal ground wire? Since it isn't an isolated system, why isn't *only* having power grounds meet at the star sufficient?
 
    <div markdown="1" class="pending"></div>
 
@@ -197,6 +197,7 @@ Planning the wiring has been a bit more difficult than I expected because it has
 
 ## 🌗︎ : Junk Questions
 
++ Can ground current flow through CAN HI and CAN LO to create a ground loop?
 + When should I use the Siglent 3303 green ground terminal?
 + Are the 3 Siglent 3303 power channels isolated from each other?
 + I understand that inductors resist change in current and can't change from one amperage to another immediately (because this would mean $$\frac{di}{dt} = \infty$$ and therefore the voltage to achieve this would be infinite). But physically, why can't they change immediately? Can magnetic fields not dissipate immediately?
