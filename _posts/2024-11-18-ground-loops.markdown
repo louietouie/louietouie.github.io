@@ -19,7 +19,7 @@ I've recently finished all the 3D prints for a robot arm. A M8325 ODrive actuate
 
 The current goal is just to get this robot arm to draw simple shapes using differential inverse kinematics (with the help of Drake). I plan on using ros2_control and Odrive's ROS2 CAN package to make interfaces for the RPi 5 to communicate with the ODrive and Arduino/TMC2209. The RPi will have a RS485 and the Arduino will have a MCP2515 for CAN communication.
 
-Planning the wiring has been a bit more difficult than I expected because it has taken me some time to understand how to manage ground loops and electromagnetic interference (EMI). Below are some of the questions I have had, and hopefully their answers.
+Planning the wiring has been a bit more difficult than I expected because it has taken me some time to understand how to manage ground loops and electromagnetic interference (EMI). Below are some of the questions I have had, and hopefully their answers (thank you solomon!).
 
 <hr style = "margin-top: 4rem">
 <br /><br />
