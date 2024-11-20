@@ -148,7 +148,7 @@ Planning the wiring has been a bit more difficult than I expected because it has
 
 + **GND NC Pins.** What is the point of CAN GND NC pin on the ODrive S1? The [ODrive CAN Bus Guide][2] says to reference it to DC- and not the CAN/Logic ground, while the [ODrive Arduino CAN Guide][14] seems to have it wired both to DC- ground and Arduino ground.
 
-   <div markdown="1" class="urgent">
+   <div markdown="1" class="urgentx">
    - [*"GNC NC offers a common connection for the CAN bus ground, it is not connected internally"*][1]
    - [*"CAN referenced to DC- on ODrive S1. CAN GND not used."*][2]
    - On the ODrive S1, [*"CAN is not isolated, CAN signals are referenced to DC-. Therefore you must connect your CAN bus ground to DC- at the system star point."*][2]
@@ -159,11 +159,11 @@ Planning the wiring has been a bit more difficult than I expected because it has
  
 + **Isolated power supplies and floating CAN.** What is the downside of keep the power supplies for the ODrive + motor, Arduino + TMC2209, TMC2209 + stepper, and RPi fully seperated/isolated from each other, and having the only thing connecting the three systems be CAN HI and CAN LO (and hoping that differential nature of CAN is sufficient to handle the two separate grounds) (the TMC2209 would also host power from the Arduino and for the stepper, but I imagine these are isolated from each other, and don't share a ground)? 
 
-   <div markdown="1" class="urgent"></div>
+   <div markdown="1" class="urgentx"></div>
 
 + **No signal ground wire.** What if we only connect the grounds of the RPi, Arduino, and ODrive power supplies, so they share the same ground voltage for CAN, and then don't include a CAN/signal ground wire? Since it isn't an isolated system, why isn't *only* having power grounds meet at the star sufficient?
 
-   <div markdown="1" class="urgent"></div>
+   <div markdown="1" class="urgentx"></div>
 
 + **Are the ODrive power cables the main problem here that generate a ground voltage difference?** AKA... if the ODrive (the source of the [V_1 drop][13] that causes the ground loop as described in the documentation) uses a seperate power supply than the RPi5, is a ground loop star point need? If it would still be needed, what if the CAN system was isolated, then would the ground star be needed?
 
@@ -171,7 +171,7 @@ Planning the wiring has been a bit more difficult than I expected because it has
 
 + The RPi is powered with a CanaKit power block. I've also connected a RPi5 GND pin to the star point point. Is this safe? I imagine the CanaKit power block is isolated from the AC wall outlet?
 
-   <div markdown="1" class="urgent"></div>
+   <div markdown="1" class="urgentx"></div>
 
 + Should I run a ground straight from the MCP2515 to the star point? Or is it safe to ground it through the Arduino (since I imagine the MCP2515 is not pulling much current), so the Arduino ground pins can handle it.
 
