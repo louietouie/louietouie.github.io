@@ -182,7 +182,7 @@ Planning the wiring has been a bit more difficult than I expected because it has
    - **Solomon from ODrive:** *"So here the only thing you need to do is ensure there's a single star point between the S1 DC-, the Arduino GND, and the rPi GND. GND NC isn't internally connected on the S1, and is just a passthrough for ease of wiring in certain cases -- so you don't need to connect anything to it unless you're using it as a passthrough between the two CAN JST-GH. I would use k but not bother with the tie between DC- and GND_NC right at the S1. In the arduino example, it's just using the passthrough -- you could remove the arduino GND to GND_NC and then the GND_NC to DC- tie and do this instead [referring to making a connection from the DC- terminal directly to star ground], and it would be strictly equivilant"*
    </div>
  
-+ **Isolated power supplies and floating CAN.** What is the downside of keep the power supplies for the ODrive + motor, Arduino + TMC2209, TMC2209 + stepper, and RPi fully seperated/isolated from each other, and having the only thing connecting the three systems be CAN HI and CAN LO (and hoping that differential nature of CAN is sufficient to handle the two separate grounds) (the TMC2209 would also host power from the Arduino and for the stepper, but I imagine these are isolated from each other, and don't share a ground)? 
+<!-- + **Isolated power supplies and floating CAN.** What is the downside of keep the power supplies for the ODrive + motor, Arduino + TMC2209, TMC2209 + stepper, and RPi fully seperated/isolated from each other, and having the only thing connecting the three systems be CAN HI and CAN LO (and hoping that differential nature of CAN is sufficient to handle the two separate grounds) (the TMC2209 would also host power from the Arduino and for the stepper, but I imagine these are isolated from each other, and don't share a ground)? 
 
    <div markdown="1" class="urgent response spacer"></div>
 
@@ -206,7 +206,7 @@ Planning the wiring has been a bit more difficult than I expected because it has
 
    <div markdown="1" class="answer response spacer">
    ODrive S1 Documentation says to share a common ground.
-   </div>
+   </div> -->
 
 <hr style = "margin-top: 4rem">
 <br /><br />
