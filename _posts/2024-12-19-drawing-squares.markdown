@@ -23,7 +23,7 @@ Because both the ODrive shoulder joint and NEMA17 stepper elbow joint use positi
 
 One of the most obvious problems, which can be seen via the spiraling laser lines, is that the shoulder joint vibrates at low speeds. I'm going to spend some time properly tuning the PI parameters for the ODrive, and maybe enabling anticogging to hopefully improve this.
 
-The other problem is that the sides of the square are not really straight. I'm not too sure whats causing this yet... probably need to think of a way to better keep the ODrive and stepper in sync with each other.
+The other problem is that the sides of the square are not really straight. I feel like I can even see this slightly concave path taken by the end effector in RViz (see the video below). I'm not too sure whats causing this yet... probably need to think of a way to better keep the ODrive and stepper in sync with each other.
 
 <br /><br />
 
