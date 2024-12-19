@@ -17,7 +17,7 @@ categories: jekyll update
 
 The robot arm is moving! The photo above is ~40 second exposure of a laser drawing made by the robot arm.
 
-To create the photo, I sent cartesian coordinate commands over a ROS topic, which were converted into desired shoulder and elbow joint velocities via a custom ROS2 control controller. The transformation from cartesian-space commands to joint-space commands was done using differential inverse kinematics with the help of the Drake [CalcJacobianTranslationalVelocity][1] function and the Eigen [pseudoinverse][2] function.
+To create the double-square, I sent cartesian coordinate commands over a ROS topic, which were converted into desired shoulder and elbow joint velocities via a custom [ROS2 control controller][3]. The transformation from cartesian-space commands to joint-space commands was done using differential inverse kinematics with the help of the Drake [CalcJacobianTranslationalVelocity][1] function and the Eigen [pseudoinverse][2] function.
 
 Because both the ODrive shoulder joint and NEMA17 stepper elbow joint use position control, these resulting joint-velocity commands are then integrated to give joint-position commands. These commands are sent from ROS2 (running on a RPi5) to the ODrive S1 and Arduino via CAN bus. These two devices also send their motor's position and velocity back to ROS2 over CAN, which is important for Drake to use to calculate a new Jacobian matrix.
 
@@ -47,3 +47,4 @@ The other problem is that the sides of the square are not really straight. I'm n
 <!-- links -->
 [1]: https://drake.mit.edu/doxygen_cxx/classdrake_1_1multibody_1_1_multibody_plant.html#ae2516569f5a2cc27e76ee0cc8b728746
 [2]: http://eigen.tuxfamily.org/dox/classEigen_1_1CompleteOrthogonalDecomposition.html#ab5e8b3f2c7b602772e1f1d7ce63d446e
+[3]: https://control.ros.org/jazzy/doc/ros2_controllers/doc/writing_new_controller.html
