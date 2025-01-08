@@ -27,7 +27,9 @@ PID is a simple way to control a system. It uses the error of the system to gene
 
 While the feedback signal to the controller from the system is just the error (**P**roportional term), the controller tracks previous errors to calculate both the **I**ntegral and **D**erivative of the position (**PID**).
 
-<div style="padding:1rem; margin-bottom:2rem; margin-top:2rem; background-color:#c2cbce">
+<div class="sub-block neutral med-top-m med-bot-m">
+<div class="title">PID Example</div>
+<hr class="small">
 
 <p>A car is moving towards a stop sign, and is 100 feet away. So P is 100. The driver applies 100 units on the gas pedal to continue to move towards the stop sign. Next loop, the car is 90 feet away. P is 90, so 90 units of gas pedal is applied. This looping continues until the car is 10 feet away. P is 10. That's a problem. The car is 10 feet away from the stop sign and still applying gas. The car overshoots the stop sign, and is now -10 feet away from the stop sign. The driver puts the car in reverse and applies 10 units of gas. If the driver only accounts for the P term, they will keep overshooting the objective.</p>
 
