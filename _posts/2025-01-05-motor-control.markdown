@@ -292,44 +292,20 @@ Some motor terms and concepts...
 
 </div>
 
-
-<div markdown="1" class="sub-block neutral large-top-m large-bot-m">
-<div class="title">Rotor Arrangements and Waveform Shape</div>
-<hr class="small">
-
-- Sinusoidal vs non-sinusodial motors (Appendix B) are different because of their windings    
-    - sinusodial vs trapezoidal permanent magnet arrangements
-        - this is the core difference between the two, the physical arrangements of motor causes the rotor-stator flux linkage shape to be either sinusoidal or trapezoidal <!-- for one 360 electrical rotation? -->
-    - sinusoidal vs trapezoidal flux density waveform -> torque waveform -> bEMF waveform
-    - sinusoidal bEMF and torque equations (derived from BLi and BLv)
-        - $$K_t$$ and $$K_e$$ constants, and their meaning
-        - Question on derivation via integral of flux (pg 42)
-    - sinusoidal vs trapezoidal current profiles for a constant torque
-        - explain my "thoughts" on the downsides of constant current
-    - sinusoidal vs trapezoidal electric commutator schematics
-    - other
-        - sinusodial motors do not need to have sinusodial windings, but space-vector theory requires sinusodial windings in order to describe magnetomotive forces (MMF) (pg 306)
-
-
-    a trapezoidal motor uses 120 six-step PWM commutation for the stator
-    a sinusoidal motor uses 180 PWM commutation for the stator
-    the rotor 
-
-</div>
-
 <span id="current-profile-bookmark"></span>
 <div markdown="1" class="sub-block neutral large-top-m large-bot-m">
 <div class="title">Sinusoidal and Trapezoidal Current Profiles</div>
 <hr class="small">
 
+- Sinusoidal vs non-sinusodial motors (Appendix B) are different because of their windings    
 - As mentioned above, the motor construction determines wether a motor has a sinusoidal or trapezoidal flux density <!-- for one 360 electrical rotation? -->
 - sinusoidal vs trapezoidal flux density waveform -> torque waveform -> bEMF waveform
 - sinusoidal bEMF and torque equations (derived from BLi and BLv)
-    - K_t and K_e constants, and their meaning
-    - Question on derivation via integral of flux (pg 42)
+    - $$K_t$$ and $$K_e$$ constants, and their meaning
 - sinusoidal vs trapezoidal current profiles for a constant torque
-    - explain my "thoughts" on the downsides of constant current
 - sinusoidal vs trapezoidal electric commutator schematics
+    - a trapezoidal motor uses 120 six-step PWM commutation for the stator
+    - a sinusoidal motor uses 180 PWM commutation for the stator
 - other
     - sinusodial motors do not need to have sinusodial windings, but space-vector theory requires sinusodial windings in order to describe magnetomotive forces (MMF) (pg 306)
 
