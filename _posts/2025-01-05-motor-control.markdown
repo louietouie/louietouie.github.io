@@ -289,6 +289,7 @@ Some motor terms and concepts...
 - mutual torque is produced by interaction of rotor field and stator field (non-salient machine)
 - reluctance torque is produced by 1 field and a variable reluctance (reluctance machine)
 - salient-pole machines use both mutual and reluctance torque
+- Q and D axis
 
 </div>
 
@@ -615,7 +616,6 @@ Some motor terms and concepts...
     - armature reaction 
     - BAMOCAR DC Link Capacity?
     - hysteresis
-    - Q and D axis
     - Winding Configurations
         - Wye motor winding
 - eddy currents
