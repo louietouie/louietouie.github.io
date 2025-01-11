@@ -1,6 +1,6 @@
 ---
 layout: post
-title:  "Motor Basics"
+title:  "Motors (Early Draft)"
 date:   2025-01-05 12:00:00 -0400
 categories: jekyll update
 ---
