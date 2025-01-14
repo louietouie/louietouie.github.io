@@ -79,11 +79,18 @@ hr.small {
 }
 
 .pending {
-    background-color: #fdefb2;
+    background-color: #ffdbb4;
 }
 
 .urgent {
-    background-color: #EAADAF;
+    background-color: #fbcfa0;
+}
+
+.x-urgent {
+    background-color: #e09396;
+    border-style: solid;
+    border-width: 3px;
+    border-color: red;
 }
 
 .neutral {

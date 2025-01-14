@@ -200,7 +200,12 @@ the paper (page 37) seems to suggest the sinusoidal or trapezoidal nature of the
 1. Do trapezoidal motors contain both a trapezoidal permanent magnet structure in the rotor, and concentrated windings?
 2. Do sinusoidal motors contain both a sinusoidal permanent magnet structure in the rotor, and distributed windings?
 3. What would the EMF profile look like for a sinusoidal PM structure with concentrated windings?
+
+<div markdown="1" class="sub-block x-urgent">
+
 4. It looks like the ODrive uses concentrated windings, so can I then make the stretch that it uses six-step PWM (for trapezoidal motors)?
+
+</div>
 
 From page 306... *The focus of this report is on sinusoidal motors. A sinusoidal motor could be defined as one in which the flux density (and consequently the torque and bEMF functions) have a sinusoidal shape. By this definition a sinusoidal motor is not required to have sinusoidal windings. However, space vector theory can only describe the MMF produced by a sinusoidal winding. For this reason most of the academic literature concerning FOC makes the assumption of a sinusoidal winding and a sinusoidal rotor flux.*
 
@@ -446,7 +451,7 @@ Some motor terms and concepts...
     - Maybe the spikes are 500mV in amplitude.
     - These 500mV differences in ground can form a ground loop.
 
-<div markdown="1" class="sub-block urgent">
+<div markdown="1" class="sub-block x-urgent">
 
 1. How can I create a falstad circuit with inductive kicks at high speed?
     1. 🚨🚨🚨
@@ -481,7 +486,7 @@ Some motor terms and concepts...
 - ODrive S1 CAN GND Daisy Chaining
     - From a Solomon comment: The ODrive CAN Gnd *"is not connected to anything but the CAN gnd on the other connector. you're not supposed to terminate your CAN GND into an S1 screw terminal, that's bad and unreliable wiring. in an actual robot you' terminate it in your power distribution busbar. the moment you have two s1s daisy chained on the same power bus, it forms a loop. the idea here is your CAN cable can go from your rpi or whatever to the first ODrive, and then you daisy chain through the rest of the chain, then after the final ODrive you terminate the CAN_GND to your system's power distribution board. It's unnecessary to run the DC-/CAN GND daisy chained, you can just have your robot controller on the same DC net, it's just a wiring nicety in certain situations"*
 
-<div markdown="1" class="sub-block urgent">
+<div markdown="1" class="sub-block x-urgent">
 
 1. Somebody mentioned that they had a AUV vehicle where the arduinos would fail when the motors were stopped just by being placed near them (so high current would cause a quickly forming (changing) magnetic field and create back EMF in the arduino or something?). Was this because the designer failed to add appropriate capacitors (or had too long of DC+/- wires), or because they had no brake resistors?
 2. Good resources to learn about brake resistors?
@@ -667,7 +672,13 @@ Book Questions
 4. Pg 42 - When defining rotor-stator flux at a given angle $$\theta$$, why is the integration done over only 1/2 of the motor surface, centered around $$\theta$$?
 5. Pg 66/67 - We are shown a chart that shows the MMF of all three phases. What does the $$\theta$$ angle represent?
 6. Pg 167 - Why is the 180 degree inverter better for approximating a sine wave output? The fundamental is lower for the 120 inverter?
+
+<div markdown="1" class="sub-block x-urgent">
+
 7. Pg 169/170 - I do not understand the commutation current profiles. To start, what does top Q and bottom Q mean? Why would we want one switch to do PWM while the other does plain commutation?
+
+</div>
+
 8. Pg 286 - What does it mean that there is a new degree of freedom added?
     1. What is the winding path in C6b?
     1. How is C6a not distributed? It skips many teeth.
