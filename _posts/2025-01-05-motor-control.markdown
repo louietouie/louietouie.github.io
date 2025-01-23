@@ -150,7 +150,7 @@ Commutation is the switching of current direction. Most motors require some form
 Brushed motors use physical slip contacts within the motor for commutation. These contacts change the current direction of the windings during a rotation. Brushed motors are usually supplied DC current through two wires, which is made into alternating AC cycles by the brushes in the motor.
 
 <!-- TODO: acknowlege other possibilities like single phase AC -->
-Brushless motors use electronic commutation outside the motor (via inverters, servo drives, RC ESCs). When using electronic commutation, some form of rotor-position reading is usually necessary for the commutation, unless sensorless control is used. Because the current is converted to AC outside of the motor, the motor is usually supplied AC current over three wires (for three phase motors).
+Brushless motors use electronic commutation outside the motor (via inverters, servo drives, RC ESCs). When using electronic commutation, some form of rotor-position reading is necessary for the commutation. This is either done with a physical sensor, or with sensorless control. Because the current is converted to AC outside of the motor, the motor is usually supplied AC current over three wires (for three phase motors).
 
 </div>
 
@@ -179,8 +179,9 @@ Cogging torque, a type of reluctance torque, is an undesireable effect caused wh
 <hr class="small">
 
 <!-- In permanent magnet rotors -->
+The construction of the rotor (and therefore of its magnetic field) and construction of the stator (winding pattern) both affect the airgap flux density profiles (the distribution of flux in the area between the rotor and stator). Depending on the motor construction, this profile is either trapezoidal or sinusoidal.
 
-The magnetic field of the rotor generates a back EMF voltage through the stator windings when spinning. Depending on the construction of the rotor, this back EMF profile is either trapezoidal or sinusoidal.
+This airgap flux density profile is directly proportional to the back EMF voltage generated as the magnetic field of the rotor moves through the stator windings when spinning. 
 
 <!-- why does the control need to follow the no-current/natural back EMF profile of the rotor -->
 <!-- The profiles of this back EMF matters in brushless control because... -->
@@ -190,6 +191,16 @@ Trapezoidal motors require much simpler hardware to control, because the inputte
 For this reason, trapezoidal motors can use 6 hall effect sensors to detect when these switches need to occur.
 
 On the other hand, sinusoidal motors need an encoder or resolver to continuously measure the shaft position. Sometimes, this isn't a problem, because the use-case may require that the motor already has a position sensor for higher-level control algorithms, like on a robot arm (note: sensorless control exists which removes the need for encoders/resolvers).
+
+#### Muddy Waters
+
+In general, **concentrated windings** are associated with trapezoidal profiles, and **distributed windings** (windings that skip over stator teeth) are associated with sinusoidal profiles. This seems to be a simplification. For example, the ODrive uses concentrated windings, but has a sinusoidal back EMF profile when [measured with an oscilliscope][1]. And trapezoidal motors can be controlled with sinusoidal methods (and vis versa), there will just be some torque ripple due to the mismatch between the rotor flux linkage and current waveform.
+<!-- HAVE NOT EXPLAINED rotor flux linkage yet -->
+<!-- HAVE NOT EXPLAINED why the airgap flux profile and current profile should match -->
+
+Solomon explained the history well...
+
+> "The resolution is that most motors these days have sinusoidal back-emf profiles. In fact, it takes some actual effort to make a truly trapezoidal back-emf profile — this was done intentionally back in the ‘90s to minimize torque ripple w/ six-step drives, since six-step (trapezoidal) drive is simpler and cheaper (significantly more so back then). These days, nobody cares. Fancy servo drives use FOC (e.g. sinusoidal commutation), and cheap hobby motors are ~never used in an application where torque ripple matters. So usually motor manufacturers just make a motor that has the desired torque-speed characteristics, and they never care about the back-emf waveform."
 
 <!-- While trapezoidal motors less electronics to control, they do have some some downsides. -->
 <!-- Surface or Interior (Permanent Magnet) -->
@@ -211,7 +222,6 @@ From page 306... *The focus of this report is on sinusoidal motors. A sinusoidal
 
 1. How is it that reluctance is constant around a rotor (non-salient), but the bEMF changes (either trapezoidal or sinusoidal)?
     1. Maybe because the flux linkage of the motor is dependent on multiple things (flux produced by windings and flux produced by permanent magnets)? Equation 2.19 page 32 and 2.24 pg 33
-
 
 </div>
 
@@ -298,6 +308,7 @@ Some motor terms and concepts...
 
 </div>
 
+<!-- MERGE WITH OTHER SIN TRAP SECTION -->
 <span id="current-profile-bookmark"></span>
 <div markdown="1" class="sub-block neutral large-top-m large-bot-m">
 <div class="title">Sinusoidal and Trapezoidal Current Profiles</div>
@@ -312,6 +323,7 @@ Some motor terms and concepts...
 - sinusoidal vs trapezoidal electric commutator schematics
     - a trapezoidal motor uses 120 six-step PWM commutation for the stator
     - a sinusoidal motor uses 180 PWM commutation for the stator
+    - Solomon - not necessarily true... *"Back in the day people would drive PMSM/BLDC motors with pure open-loop sine waves — this isn’t done much anymore cause it’s much worse than FOC control, which also is technically sinusoidal but with some twists."*
 - other
     - sinusodial motors do not need to have sinusodial windings, but space-vector theory requires sinusodial windings in order to describe magnetomotive forces (MMF) (pg 306)
 
@@ -376,6 +388,7 @@ Some motor terms and concepts...
         <!-- - inverters and PWM allowed for variable frequency operation (aka different speeds?) around 1958 -->
         - voltage source inverters are usually used, even though it is current which is what we want to control
         - inverter control methods (six-step squarewave, six-step PWM, PWM, SVM)
+        - The ODrive does not use PWM. Solomon... *"No, the ODrive uses SVM modulation, the output current waveform will be sinusoidal."*
         - 120 vs 180 degree inverters
     - Servo Amplifier vs Inverter
         - servo drives seem to be a more complete solution. They often include FOC or some form of closed loop control, [brake control circuits][13]
@@ -392,7 +405,25 @@ Some motor terms and concepts...
 3. 🚨🚨🚨 what hardware on the ODrive S1 constitutes the inverter?
 
 </div>
+
+
+<div markdown="1" class="sub-block neutral large-top-m large-bot-m">
+<div class="title">Circuit 1: Three Phase Motor Voltage Notation</div>
+<hr class="small">
+
+A [three phase motor](https://tinyurl.com/28x59lvz) has many points you can measure voltage from... 
+- **N:** Neutral Point - The center of the wye connection
+- **M:** Midpoint of DC Bus - Essentially 1/2 of the voltage supply
+- **A, B, C:** Inverter output/Motor phase input
+- **A to M:** Pole/Terminal Voltage
+- **A to N:** Line Neutral/Phase Voltage
+- **A to B:** Line-Line Voltage
+- **N to M:** Neutral Voltage
+<!-- https://www.falstad.com/circuit/circuitjs.html?ctz=CQAgjCAMB0l3BWEAOaAmZYCcB2BzkcBmLUhJAFkhEqJoFMBaMMAKACcacA2ENSZF15gMUGhxoi+CXgh58BYhBO5Vps+f0HVlAJRDNh3akTThjYs2qTVb0PeepgLWx5ZDXLsLBRIIwkGgkRNgIdDAORAhmztRUThbUVjpiFNBgBDhYgZAUOMjcJJA29qwAbnwEIFExWGY1YnHUiY2lAO7gog3Y9dFQrB0NDRiCDZCssQam4FKM0z3gFFCwkBAB8BtwfKWTYBRLLDH74HWLy3Brm5vbypNERMJS98Kne+er4FcbNwPVfQvDGT9QZ9NBAyZg3jjDoQ8EWBbQgzOE5mQzqYFI3iQtzYxGmJynfGVbS-IkjTqCcmIkSUqo0lEYxgUQQLJm0kkdNnEinc6micn0sak0FAoZ9RFzGKzabMxkywRyXiyxGKjwK+T0lVSbEULBYoGI3X6pV6lC2X5Gs2LJbIc0w46260zMyI1QmB4eVTVD2Gr3PT0HKS+wP1D2HfoAY2q-ADfDUFC9SxgGwgjDQWGgpGyPmKerB4pWEBgbCjkwTSzQ8cT7wu1WTcGy3D2kCIFAQFDB7yLv0F-1E5Yx9IHZa9eL6Yqso+Fk6WRIH4wAHjRHfxeNxuEh+FgPJ0QAA5AA6AGdGMeAHb0ACuABd2ABDAA2x4ADgB7ACWZ+vrCXGRwHjQLFTQ7bcDjMABZY9TyPAARABhY8ACNLyPY8AFt3wAEzfT9vyXZhdU+f9yBmOJdwABVfB96AAegAFXodgMLPR9jwANSo687wAc3oY8AApPzKRjr0Y49XxvZ8bwASh-AwsTMGQK0oONwFtY8YPobj2HoPijwASTPYT2FE9hjz3V8uOvd9XzPY87zPTD2M4ni9IAdTvYSADNXyYo85OMOgwGIEA8CceQwJAciAAs7yPPT+IfT89IvG97wfaTnIfLjeLksITA+bg0HqXIdykAAZZLGEqi8spy+hWGfWN-HqZAlha6pGk+K5GpAYxKRwRTjjQQbOtsbrNl+dsK1GjrcV+fq+FGt10VdNR-RwUr-URTbZw9XbVt+A7sRW+alxjfhZyxSB-wrJYAEE5P4CBVz4YKFFA1SACE5KIKp+Fu4o3rIysQDg35KziL1IckF0IesJ42thjEBw6gdtqmzRFDwMxXB20Fsb6Dq8SRjq-vaxIjqJqQcZoSmOlpmQoYp80mtRixybpkwuvWSbX09Pqkw8SAsEENRizECBKOourXPYgB9ODwNYfnmiFqhReF8BoGEPgxDoGq9L3K9b1Yo9+JiuL6Eyo8OOyuXbfl+69xVjx-1HYXNcdCWYhAQ3quS2XeIVr7wf5r0PY1sW7AgIL9xN9Kg70tj5b3ZWgA -->
+<iframe style="display:block; width:100%;" id="circuitFrame" src="https://tinyurl.com/28x59lvz" width="800" height="550"></iframe>
+</div>
  
+
 <!-- I believe an understanding of PWM is enough to understand why the ODrive will constantly be pulling changing current over DC+/-, we don't yet need to understand FOC -->
 <!-- But by this point, I would like to have an understanding not only of that the ODrive pulls changing currents over DC+/- because of PWM, but also how it does it -->
 
@@ -406,24 +437,41 @@ Some motor terms and concepts...
 
 ## Parasitic Resistance, Impedance, and Capacitance
 
-- PURPOSE: The point here is to establish that the ODrive S1 is constantly changing the amount of current it pulls (because of PWM, but don't go into PWM details yet), that this can cause voltage spikes due to parasitic resistance/capacitance, and why this must be considered (ground loops).
+All wires have parasitic resistance, parasitic impedance, and parasitic capacitance.
 
-- CONTENT
-- All wires have parasitic resistance, parasitic impedance, and parasitic capacitance.
-    - Because wires have parasitic resistance, the voltage across them will drop.
-    - Because wires have parastic impedance, when we being drawing current over the wire, the voltage will temporarily drop
-        - this newly introduced voltage rise across our inductor, the wire, is fighting against the new current flow.
-        - When we stop drawing current, the voltage will temporarily rise. This corresponding voltage drop across the inductor is fighting against the new current stoppage... it wants current to keep flowing.
-        - Inductors are kind of like inertia, they want the current to keep doing whatever it is already doing. They resist change in current
-- This is a form of an RLC circuit.
-- what are the variables that increase parastic resistance and impedance
+Because wires have **parasitic resistance**, the voltage across them will drop. The longer the wire, and the thinner the wire, the more resistance.
+
+$$R = \rho \frac{l}{A}$$
+
+Because wires have **parastic impedance**, when we begin drawing current over the wire, the voltage will temporarily drop. This newly introduced voltage *rise* across our inductor (the wire) fights against the new current flow. When we stop drawing current, the voltage will temporarily rise. This corresponding voltage *drop* across the inductor is fighting against the new current stoppage... it wants current to keep flowing. Inductors are kind of like inertia, they want the current to keep doing whatever it is already doing. They resist change in current.
+    
+The inductance, L, is dependent on both the number of turns of wire, and the permeance of the space within the wire loop.
+
+$$L=N^2\mathscr{P}$$
+
+And the permeance of wire is affected by the loop area $$A$$, the permeability of the material within the loop $$\mu$$, and the length of the flux path $$l$$.
+
+$$\mathscr{P}=\frac{\mu A}{l}$$
+
+These parasitic effects are a problem for motor drivers like the ODrive, because they are constantly pulling different amounts of current due to PWM motor control. This can cause voltage spikes, and consequently ground loops in motor control systems.
+
+<!--
 - impedance vs inductance?
+- This is a form of an RLC circuit.
+--->
 
-- IMAGES
-- Simple Square Wave example with...
-    - resistance
-    - resistance + inductance
-    - resitance + inductance + capacitance
+<div markdown="1" class="sub-block neutral large-top-m large-bot-m">
+<div class="title">Circuit 2: Voltage Spikes due to Inductance</div>
+<hr class="small">
+
+In this [simple circuit](https://tinyurl.com/28fc7sg6), you can see how parasitic inductance results in voltage spikes. Imagine the first resistor and inductor as a simplified representation of the parasitic effects of the DC+ wire (as with a lumped-element model).
+
+The switch is an *extremely* simplified version of the effects of PWM of the motor.
+
+The capacitor smooths out the voltage spikes. Without the capacitor, when the switch opened, the voltage required to push the current of the inductor across the open switch would be very high, so the voltage spike would be much higher. With the capacitor, this current can instead be used to charge the capacitor. When the switch is closed and the inductor resists the flow of current, the capacitor can then be discharged/supply current while the inductive DC+/- cables get "up to speed".
+
+<iframe style="display:block; width:100%;" id="circuitFrame" src="https://www.falstad.com/circuit/circuitjs.html?ctz=CQAgjOB0AMt-CwFMC0B2EA2AnJAzACwFh4CsY0BhYmpIemIdVTqYYAUAE4go3hgATCAIAOAcOghokTgBsR49sKFKh06THjYduvfuwhBs7IWIM8eCgUGZG0DgGNwgtStfg0jAprjM0kGjYpOTQpMGUYXiK0hwA5i5KXolG0OJSDgDuqW4pyrFg4TngmFKCaUaCPmVSFAjwRpCk8cWCVa2k9rEASiDYjIKdMYNdwqSwjXTGdBlNHNn9RkM0ZUNZJauMK+DYkvMbOyq7hz28-PkomD75GSJSYhqzzdnlua8HDgD2RljVLoLYe6iWSYGgEbBoUREKiFXywCBlH54DhAA" width="800" height="550"></iframe>
+</div>
 
 <hr style = "margin-top: 4rem">
 <br /><br />
@@ -451,6 +499,8 @@ Some motor terms and concepts...
     - Maybe the spikes are 500mV in amplitude.
     - These 500mV differences in ground can form a ground loop.
 
+- When a high-voltage motor controller is disconnected from the battery, these capacitors may still have a high voltage across them. Active discharge loops are used to dissipate the energy left in the capacitors.
+
 <div markdown="1" class="sub-block x-urgent">
 
 1. How can I create a falstad circuit with inductive kicks at high speed?
@@ -461,6 +511,21 @@ Some motor terms and concepts...
 5. What is a good resource to start learning about how to choose a capacitor value?
     1. Is this where overdamped, underdamped, and critically damped RLC circuits comes into play?
 
+</div>
+
+
+<div markdown="1" class="sub-block neutral large-top-m large-bot-m">
+<div class="title">Circuit 3: Voltage Spikes on the DC +/- Wires</div>
+<hr class="small">
+
+In reality, the voltage spikes caused by inductance are affected by a few other things, like the voltage drop caused by the parasitic resistance of the capacitor connection between DC+/-.
+
+The *True Ground to ODrive DC-* plot below shows how the voltage difference between battery ground and DC- ground can vary by almost 2V in our example (this is highly dependent on the values chosen for the capacitors, resistors, and inductors, so isn't always 2V).
+
+This 2V difference is the **main cause** of ground loops. When the voltage at DC- on our ODrive is at anything other than 0V, the current will take all paths back to ground, and this includes through communication wires, or any other paths available. So if the ODrive is connected to an Arduino, which is connected back to the same 0V ground, some current will take this path. This then causes all the downsides of ground loops.
+
+<!-- https://www.falstad.com/circuit/circuitjs.html?ctz=CQAgjCAMB0l3BWEAOaAmZYCcB2BzkcBmLUhJAFkhEqJoFMBaMMAKACcacA2ENSZF15gMUGhxoi+CXgh58BYhBO5Vps+f0HVlAJRDNh3akTThjYs2qTVb0PeepgLWx5ZDXLsLBRIIwkGgkRNgIdDAORAhmztRUThbUVjpiFNBgBDhYgZAUOMjcJJA29qwAbnwEIFExWGY1YnHUiY2lAO7gog3Y9dFQrB0NDRiCDZCssQam4FKM0z3gFFCwkBAB8BtwfKWTYBRLLDH74HWLy3Brm5vbypNERMJS98Kne+er4FcbNwPVfQvDGT9QZ9NBAyZg3jjDoQ8EWBbQgzOE5mQzqYFI3iQtzYxGmJynfGVbS-IkjTqCcmIkSUqo0lEYxgUQQLJm0kkdNnEinc6micn0sak0FAoZ9RFzGKzabMxkywRyXiyxGKjwK+T0lVSbEULBYoGI3X6pV6lC2X5Gs2LJbIc0w46260zMyI1QmB4eVTVD2Gr3PT0HKS+wP1D2HfoAY2q-ADfDUFC9SxgGwgjDQWGgpGyPmKerB4pWEBgbCjkwTSzQ8cT7wu1WTcGy3D2kCIFAQFDB7yLv0F-1E5Yx9IHZa9eL6Yqso+Fk6WRIH4wAHjRHfxeNxuEh+FgPJ0QAA5AA6AGdGMeAHb0ACuABd2ABDAA2x4ADgB7ACWZ+vrCXGRwHjQLFTQ7bcDjMABZY9TyPAARABhY8ACNLyPY8AFt3wAEzfT9vyXZhdU+f9yBmOJdwABVfB96AAegAFXodgMLPR9jwANSo687wAc3oY8AApPzKRjr0Y49XxvZ8bwASh-AwsTMGQK0oONwFtY8YPobj2HoPijwASTPYT2FE9hjz3V8uOvd9XzPY87zPTD2M4ni9IAdTvYSADNXyYo85OMOgwGIEA8CceQwJAciAAs7yPPT+IfT89IvG97wfaTnIfLjeLksITA+bg0HqXIdykAAZZLGEqi8spy+hWGfWN-HqZAlha6pGk+K5GpAYxKRwRTjjQQbOtsbrNl+dsK1GjrcV+fq+FGt10VdNR-RwUr-URTbZw9XbVt+A7sRW+alxjfhZyxSB-wrJYAEE5P4CBVz4YKFFA1SACE5KIKp+Fu4o3rIysQDg35KziL1IckF0IesJ42thjEBw6gdtqmzRFDwMxXB20Fsb6Dq8SRjq-vaxIjqJqQcZoSmOlpmQoYp80mtRixybpkwuvWSbX09Pqkw8SAsEENRizECBKOourXPYgB9ODwNYfnmiFqhReF8BoGEPgxDoGq9L3K9b1Yo9+JiuL6Eyo8OOyuXbfl+69xVjx-1HYXNcdCWYhAQ3quS2XeIVr7wf5r0PY1sW7AgIL9xN9Kg70tj5b3ZWgA -->
+<iframe style="display:block; width:100%;" id="circuitFrame" src="https://tinyurl.com/26lral7x" width="800" height="550"></iframe>
 </div>
     
 <hr style = "margin-top: 4rem">
@@ -682,5 +747,8 @@ Book Questions
 8. Pg 286 - What does it mean that there is a new degree of freedom added?
     1. What is the winding path in C6b?
     1. How is C6a not distributed? It skips many teeth.
+9. If motor wires need to be long, should it be the phase wires or DC power wires?
 
 </div>
+
+[1]: https://things-in-motion.blogspot.com/2018/12/why-most-hobby-grade-bldc-out-runners.html
