@@ -1,7 +1,7 @@
 ---
 layout: post
 title:  "Estimating Normals from Pointclouds"
-date:   2025-01-05 12:00:00 -0400
+date:   2025-01-27 12:00:00 -0400
 categories: jekyll update
 ---
 
