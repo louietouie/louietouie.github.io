@@ -31,18 +31,18 @@ While the feedback signal to the controller from the system is just the error (*
 <div class="title">PID Example</div>
 <hr class="small">
 
-<p>A car is moving towards a stop sign, and is 100 feet away. So P is 100. The driver applies 100 units on the gas pedal to continue to move towards the stop sign. Next loop, the car is 90 feet away. P is 90, so 90 units of gas pedal is applied. This looping continues until the car is 10 feet away. P is 10. That's a problem. The car is 10 feet away from the stop sign and still applying gas. The car overshoots the stop sign, and is now -10 feet away from the stop sign. The driver puts the car in reverse and applies 10 units of gas. If the driver only accounts for the P term, they will keep overshooting the objective.</p>
+<p>A car is moving towards a stop sign, and is 100 feet away. P is 100. The driver applies 100 units on the gas pedal to continue to move towards the stop sign. Next loop, the car is 90 feet away. P is 90, so 90 units of gas pedal are applied. This looping continues until the car is 10 feet away. P is 10. This is a problem; the car is 10 feet away from the stop sign and still applying gas. The car overshoots the stop sign, and is now -10 feet away from the stop sign. The driver puts the car in reverse and applies 10 units of gas. If the driver only accounts for the P term, they will keep overshooting the objective.</p>
 
-<p>This is what the D term is for, it dampens the oscillations. When the driver is 90 feet away, P will be 90 and D will be 90 - 100 = -10 feet. So in total, P + D = 80 units of gas pedal will be applied. Not when the drive is 10 feet away, and say the loop before was 25 feet away... D will be -15 and P will be 10. So the system input P + D will be -5; the driver will be braking before I get there.</p>
+<p>The D term dampens these oscillations. When the driver is 90 feet away, P will be 90 and D will be 90 - 100 = -10 feet. So in total, P + D = 80 units of gas pedal will be applied. Now when the drive is 10 feet away, and say the loop before was 25 feet away... D will be -15 and P will be 10. So the system input P + D will be -5; the driver will be braking before reaching the stop sign.</p>
 
-<p>The I term accumulates error over time. Ignoring D, say the driver is stopped 2 feet away from the stop sign, so applies 2 units to my gas pedal. But my throttle cable is loose so the pedal has a dead zone and this slight press does nothing. The I term will keep accumulating the error each loop.... 2 + 2 + 2... so 3 loops later P + I = 8 units. So the I term helps remove this steady state error; the error this system would have if we just let it run forever.</p>
+<p>The I term accumulates error over time. Ignoring D, say the driver is stopped 2 feet away from the stop sign, so applies 2 units of gas. But the throttle cable is loose so the pedal has a dead zone and this slight press does nothing. The I term will keep accumulating the error each loop... 2 + 2 + 2... so 3 loops later P + I = 8 units. So the I term helps remove this steady state error: the error this system would have if it ran forever.</p>
 </div>
 
-In reality, the P, I, and D terms all have constants $$K_p$$, $$K_i$$, and $$K_d$$ that need to be tuned so controller accounts for each term differently. For the stop sign example, I'm probably going to want to start braking sooner than when I'm 10 feet away, so we can increase $$K_d$$.
+In reality, the P, I, and D terms all have constants $$K_p$$, $$K_i$$, and $$K_d$$ that need to be tuned, so the controller accounts for each term differently. For the stop sign example, we probably want to start braking sooner than when we are 10 feet away, so we can increase $$K_d$$.
 
 #### Cartpole + PID
 
-Hand tuned PD ($$K_i$$ = 0) worked ok with the 3D printed cartpole. However, because a PD controller only cares about the angle of the pole, and not the position of the cart, the cart would slowly drift over time until it hit the endstops.
+Hand tuned PD ($$K_i$$ = 0) worked ok with the 3D-printed cartpole. However, because a PD controller only cares about the angle of the pole, and not the position of the cart, the cart would drift until it hit the endstops.
 
 <hr style = "margin-top: 4rem">
 <br /><br />
