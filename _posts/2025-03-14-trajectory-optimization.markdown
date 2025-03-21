@@ -53,6 +53,12 @@ I've been working on implementing trajectory optimization on the ping-pong arm. 
 Additionally, I ran these simulations on the same 2-DOF arm that I used for square drawing. However, achieving the correct paddle orientation is usually impossible with only two joints,
 so I added a third wrist joint. I may need to add a 4th to allow the arm to tilt the paddle up and arc the ball upwards. However, I would like to keep it as simple as possible to keep the physical robot weight down.
 
+Note that the large gap in coverage of the workspace below is just because the initial condition to the IK problem wasn't optimal so the solver sometimes failed.
+
+<img src="/assets/images/trajectory_optimization/workspace.png" alt="Yashikawa Score of Poses Within Robot Workspace" class="image-center"/>
+<br /><br />
+<img src="/assets/images/trajectory_optimization/trajectory.png" alt="Yashikawa Score of Poses Within Ball Trajectory" class="image-center"/>
+
 <hr style = "margin-top: 4rem">
 <br /><br />
 
