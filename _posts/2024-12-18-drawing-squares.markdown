@@ -27,7 +27,7 @@ The other problem is that the sides of the square are not really straight. I fee
 
 <br /><br />
 
-<iframe width="840" height="473" src="https://www.youtube.com/embed/2VtBVIsuxbI" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+<iframe width="640" height="360" src="https://www.youtube.com/embed/2VtBVIsuxbI" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
 
 <hr style = "margin-top: 4rem">
 <br /><br />
