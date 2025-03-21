@@ -62,6 +62,15 @@ Note that the large gap in coverage of the workspace below is just because the i
 <hr style = "margin-top: 4rem">
 <br /><br />
 
+### Ball Trajectory Model
+
+The bouncing ball is represented by three parametric equations, x(t), y(t), and z(t). z(t) is the hardest because in my simple model that doesn't account for friction/spin/etc, z is the only direction effected by bouncing. This bouncing behavior can be represented by a geometric infinite sequence, where the ratio between terms is the restitution (the bounciness) of the ping-pong ball. [Andrew Foote's][5] blog post was very helpful in creating my model, shown below.
+
+<img src="/assets/images/trajectory_optimization/bouncing.png" alt="Yashikawa Score of Poses Within Ball Trajectory" class="large-image-center"/>
+
+<hr style = "margin-top: 4rem">
+<br /><br />
+
 ### Next Steps
 
 The downside to my approach is that solving these trajectory optimizations is expensive; each one takes about 0.33 seconds. As the ping-pong ball approaches and the RANSAC prediction gets more accurate, I will need a control method that updates the commanded trajectory to respond to these changes in real-time, like with Model Predictive Control.
@@ -71,3 +80,4 @@ However, MPC is usually used with linearized systems, so I need to figure out ho
 [2]: https://www.youtube.com/watch?v=TrhjG72PJNU
 [3]: https://drake.mit.edu/doxygen_cxx/classdrake_1_1planning_1_1trajectory__optimization_1_1_kinematic_trajectory_optimization.html
 [4]: https://louietouie.github.io/jekyll/update/2024/12/18/drawing-squares.html
+[5]: https://andrew-foote.github.io/physics/bouncing-ball.html
