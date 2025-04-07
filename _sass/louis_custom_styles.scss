@@ -46,6 +46,35 @@ iframe {
         margin-right: auto;
     }
 
+    & .title_small { // nesting
+        background-color: transparent;
+        font-size: 18px;
+        text-align: center;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    & .title_xsmall { // nesting
+        background-color: transparent;
+        font-size: 16px;
+        text-align: center;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    & code { // nesting
+        background-color: #9eb7bf;
+        border: none;
+    }
+
+}
+
+.title_small { // nesting
+    background-color: transparent;
+    font-size: 20px;
+    text-align: center;
+    margin-left: auto;
+    margin-right: auto;
 }
 
 hr.small {
