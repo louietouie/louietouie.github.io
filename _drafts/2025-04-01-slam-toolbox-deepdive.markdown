@@ -242,7 +242,7 @@ Covariance measures the
 <div class="title_xsmall">scan_buffer_size, scan_buffer_maximum_scan_distance</div>
 <hr class="small">
 
-These are both used in `ScanManager::AddRunningScan` to limit the number of scans stored in `m_RunningScans`. If there are more than `scan_buffer_size` scans, or the euclidean distance between the first and last scan is greater than `scan_buffer_maximum_scan_distance`, the oldest scan is removed.
+These are both used in `ScanManager::AddRunningScan` to limit the number of scans stored in the `std:vector` variable `m_RunningScans`. If there are more than `scan_buffer_size` scans, or the euclidean distance between the first and last scan is greater than `scan_buffer_maximum_scan_distance`, the oldest scan is removed.
 
 When a new scan is added and `Mapper::Process` is called, the `m_pSequentialScanMatcher` compares the current scan to `m_RunningScans` (the scans that form the map $$m$$), to find the best pose. Once the best sequential transform has been found and the new node and edges have been added to the pose graph, the current pose is then added to `m_RunningScans` with `ScanManager::AddRunningScan`.
 
@@ -271,7 +271,11 @@ When the static method `ScanMatcher::Create` is called, one of the member variab
 
 As I talked about above, MCSM uses a triple for-loop to loop over the given x, y, and yaw ranges in step sizes based on given resolutions. As you will see in the box below, for yaw, these ranges and resolutions can be explicitly defined by the user. However, for x and y, the range and resolution of the search is determined by the size (`search_space_dimension`) and resolution (`...search_space_resolution`) of the correlation grid itself in `ScanMatcher::MatchScan`. The coarse resolution is hardcoded to be twice that of the fine resolution.
 
-<!-- min_pass_through, occupancy_threshold -->
+<!-- min_pass_through -> m_pMinPassThrough, occupancy_threshold -> m_pOccupancyThreshold -->
+<!-- correlation grid creation? (LaserScans to Grid) -->
+<!-- these are in Karto.h, which is in Mapper.h, which is in Mapper.cpp -->
+<!-- used in the OccupancyGrid class, in UpdateCell -->
+<!-- although i don't know where this OccupancyGrid class gets used -->
 
 Questions
 
@@ -308,6 +312,8 @@ These values are used in the yaw for-loop of MCSM to define the range of possibl
 
 3. If a sufficient match is not found between the scan and map, and `use_response_expansion` is set to true, the `coarse_angle_resolution` will be increased by 20 degrees, and a search will be run again. If a match is still not found, attempts are also made at 40 and 60 degrees.
 
+4. Unlike the translational offsets and resolutions, the angle offsets and resolutions are shared between both the sequential and loop matching scan matchers.
+
 Questions
 - what defines a sufficient match? AKA how can the `bestResponse` be 0.0, each translation must have *some* score.
 - When running `use_response_expansion` loops, maybe add functitionality to not re-search the inner range?
@@ -328,6 +334,15 @@ Questions
 <div class="title_xsmall">do_loop_closing, loop_match_minimum_chain_size, loop_match_maximum_variance_coarse, loop_match_minimum_response_coarse, loop_match_minimum_response_fine</div>
 <hr class="small">
 
+<!-- where are the correlation/visual odometry counterparts to these? I don't think there is any, these are in TryCloseLoop, and these seem to be guards on wether a match is good enough to close a loop  -->
+
+<!-- loop_match_maximum_variance_coarse -> m_pLoopMatchMaximumVarianceCoarse -->
+<!-- loop_match_minimum_response_coarse -> m_pLoopMatchMinimumResponseCoarse -->
+
+<!-- link_match_minimum_response_fine
+link_scan_maximum_distance
+loop_search_maximum_distance -->
+
 </div>
 
 
@@ -336,6 +351,13 @@ Questions
 <div class="title_xsmall">distance_variance_penalty, angle_variance_penalty</div>
 <div class="title_xsmall">minimum_distance_penalty, minimum_angle_penalty</div>
 <hr class="small">
+
+<!-- motion model of scan matcher starting on line 671. Part of the response from parallel computing that gets added to the correlation grid -->
+
+<!-- `distance_variance_penalty` -> `m_pDistanceVariancePenalty`
+`angle_variance_penalty` -> `m_pAngleVariancePenalty`
+`minimum_angle_penalty` -> `m_pMinimumAnglePenalty`
+`minimum_distance_penalty` -> `m_pMinimumDistancePenalty` -->
 
 </div>
 
@@ -352,8 +374,9 @@ Questions
 
 
 
-<!-- ______ MESSY NOTES ______ -->
+<!-- ______ MESSY NOTES: Adding a Scan to the Map ______ -->
 
+<!--
 *SlamToolbox::addScan*
 - We recieve a pose and a scan
 - Pass the pose and scan to the Karto Mapper (`Mapper::Process`).
@@ -370,10 +393,11 @@ Questions
 
 A. `LocalizedRangeScan * pLastScan = m_pMapperSensorManager->GetLastScan(pScan->GetSensorName());`
 B. `if (!HasMovedEnough(pScan, pLastScan))*`
+-->
 
 
-### Factor Graphs and Pose Graphs
-
+<!-- ______ MESSY NOTES: Factor Graphs and Pose Graphs ______ -->
+<!--
 [PPF of SLAM Paper][2]
 [video][8]
 
@@ -399,18 +423,16 @@ B. `if (!HasMovedEnough(pScan, pLastScan))*`
     - Constraints have an information matrix (which I believe determines the uncertainty of measurements?) Scan matching is better than odometry, so its information matrix will have larger values (it matters more during the optimization). It also represents uncertainity in different dimensions. In a long hallway, scan matching is better side to side towards the closer walls
     - the state vector is the number of nodes * number of dimensions
     - the matrix H is sparse becuase the error function between two nodes only needs those two nodes, and also because constraints between nodes usually only happen if those nodes are close together (and scan matching occurs between them)
-
-<hr style = "margin-top: 4rem">
-<br /><br />
+-->
 
 
-### Data Association and Loop Closures
-
+<!-- ______ MESSY NOTES: Data Association and Loop Closures ______ -->
+<!--
 [PPF of SLAM Paper][2]
 [video][10]
 
 - Short-term: matches between consecutive frames (via optimal flow/descriptor matching)
-- Long-term: new measurements to old lanmarks for loop closure (via bag-of-words, tree search, other robust methods)
+- Long-term: new measurements to old landmarks for loop closure (via bag-of-words, tree search, other robust methods)
 - Loop Closure Algorithms
     - Dense Methods: ICP, Bundle Adjustment, Pose Graph Estimation
     - Scan Matching: ICP, scan to scan, scan to map, map to map, feature based, RANSAC, correlative matching
@@ -419,13 +441,11 @@ B. `if (!HasMovedEnough(pScan, pLastScan))*`
     - When data association fails and returns a bad loop closure, things get bad
     - RANSAC
     - Odometry validation
-
-<hr style = "margin-top: 4rem">
-<br /><br />
+-->
 
 
-### SLAM toolbox specific
-
+<!-- ______ MESSY NOTES: SLAM toolbox specific ______ -->
+<!--
 [video][11]
 
 - The graph stores nodes and confidences (the covariance matrix)
@@ -437,19 +457,6 @@ B. `if (!HasMovedEnough(pScan, pLastScan))*`
 - slam toolbox serializes the pose graph and data (NOT the map, correct?) which makes you able to add to it later
 - Lifelong mapping = continued mapping + removal of nodes
 - he is working (as of 2019) on supporting a single robot with multiple scanners, so you don't need to combine the scans with a scanassembler beforehand
-
-
-### Terminology
-
--  pose graph
-- laser scan matching (to refine odometry)
-- KD Tree search (localizes a robots position when given a map)
-- pose-graph deformation localization
-- AMCL localization
-- scan matcher (karto)
-
-
-### SLAM Toolbox
 
 1. Localization
     1. optimization-based localization (Google Ceres)
@@ -474,10 +481,22 @@ B. `if (!HasMovedEnough(pScan, pLastScan))*`
     1. The pose graph + associated laser scans (for each pose) are used to create the map
     2. So when a loop closure is found, the map is not directly updated. First the pose graph is updated, and therefore the associated scans (via the PosedScan objects) are used to recreate the map
     3. Uses open_karto library, which is good at 2D laser scan matching
+-->
 
 
-### SLAM
+<!-- ______ MESSY NOTES: Terminology ______ -->
+<!--
+-  pose graph
+- laser scan matching (to refine odometry)
+- KD Tree search (localizes a robots position when given a map)
+- pose-graph deformation localization
+- AMCL localization
+- scan matcher (karto)
+-->
 
+
+<!-- ______ MESSY NOTES: SLAM in General ______ -->
+<!--
 [Matlab][1]
 
 1. Filtering (EKF/Particle) uses current measurements to estimate state
@@ -493,18 +512,13 @@ B. `if (!HasMovedEnough(pScan, pLastScan))*`
         3. whenever relationships between external data / scans can be found, we add new edges to the graph
         4. "its better to miss a real loop closure than create a false one"
     1. maps to do path planning can be created by making a binary occupancy grid (1 for wall 0 for nothing). Probabilistic occupancy grid.
-
-
-<hr style = "margin-top: 4rem">
-<br /><br />
+-->
 
 
 ### Papers
 
 1. Liu, Haiqiao, et al. “Correlation scan matching algorithm based on multi‐resolution auxiliary historical point cloud and lidar simultaneous localisation and mapping positioning application.” *IET Image Processing*, vol. 14, no. 14, 14 Oct. 2020, pp. 3596–3601, https://doi.org/10.1049/iet-ipr.2019.1657.
 2. Olson, E.B. “Real-Time Correlative Scan Matching.” *2009 IEEE International Conference on Robotics and Automation,* May 2009, https://doi.org/10.1109/robot.2009.5152375.
-
-
 
 
 
