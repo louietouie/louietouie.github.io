@@ -16,7 +16,7 @@ This [popular SLAM Paper][2] says that *"SLAM systems require extensive paramete
 
 I spent some time learning the algorithms used in SLAM Toolbox and the purpose of each parameter. Afterwards, I was able to create a cleaner map by tuning the default parameters to my use-case, as shown below.
 
-![Long Exposure Laser Square Drawn by Robot](/assets/images/laser_square.jpeg)
+![Long Exposure Laser Square Drawn by Robot](/assets/images/slam_parameters/beforeafter.png)
 
 <hr style = "margin-top: 4rem">
 <br /><br />
@@ -139,6 +139,8 @@ Questions
 
 One of the most important part of SLAM algorithms is scan matching: the processes of aligning two pointclouds to determine the transformation (translation and rotation) between them. SLAM Toolbox uses two scan matchers, `m_pSequentialScanMatcher` and `m_pLoopScanMatcher`. The sequential matcher finds transformations between scans taken sequentially, which is used to define edge constraints between nodes in the pose graph and for visual odometry. The loop matcher looks more broadly for similar scans to close loops when the robot revisits places.
 
+![Pose Graph Showing Edges from Both Scan Matchers](/assets/images/slam_parameters/loop_closure.png)
+
 <hr class="small">
 
 #### ICP
@@ -165,7 +167,7 @@ This says that the probability of the robot being at position $$x_i$$ (given it'
 - **motion model:** the probability of the robot being at position $$x_i$$ given it's previous position $$x_{i-1}$$ and the sensor readings $$u$$ (found via using odometry/IMU data to perform dead reckoning)
     - Note: the motion model does talk about using $$u$$, which is the standard convention representing control inputs. However, I believe we are using it to represent IMU and wheel encoder sensor data, is this correct?
 
-Our guess of the current position will be the mean of $$p(x_i \vert x_{i-1},u,m,z)$$. However, having the distribution is useful, because the standard deviation gives us a confidence interval, which can be used to give each edge constraint in the pose graph different strengths (how "rigid" an edge is). Additionally, if the robot is travelling down a hallway that is long in the x-direction, it will have more pointcloud points on the nearby walls above and below it. This allows it to have high confidence in it's Y position, and low confidence in it's X position, which is reflected in the covariance.
+Our guess of the current position will be the mean of $$p(x_i \vert x_{i-1},u,m,z)$$. However, having the distribution is useful, because the standard deviation gives us a confidence interval, which can be used to give each edge constraint in the pose graph different strengths (how "rigid" an edge is). For example, if the robot is travelling down a hallway that is long in the X direction, it will have more pointcloud points on the nearby walls above and below it in the Y direction. This allows it to have high confidence in it's Y position, and low confidence in it's X position, which is reflected in the covariance.
 
 <hr class="small">
 
