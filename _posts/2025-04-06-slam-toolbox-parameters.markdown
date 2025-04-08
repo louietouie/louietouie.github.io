@@ -630,5 +630,20 @@ B. `if (!HasMovedEnough(pScan, pLastScan))*`
 <!-- Research of Autonomous Navigation for Mobile Robots Using Karto SLAM Algorithm Under ROS -->
 <!-- https://www.kexuetongbao-csb.com/volume/CSB/69/04/research-of-autonomous-navigation-for-mobile-robots-using-karto-slam-algorithm-under-ros-6663dc3dda4ce.pdf -->
 
+
+
+<!-- ______________ FURTHER RESEARCH: OTHER SCAN MATCHING ALGORITHMS ______________ -->
+
 <!-- Many-to-Many Multi-Resolution Scan Matching -->
 <!-- https://citeseerx.ist.psu.edu/document?repid=rep1&type=pdf&doi=ce0f8e87fb01bc09b2e7b75c34f80e4f04ae839a -->
+
+<!-- A systematic analysis of scan matching techniques for localization in dense orchards -->
+<!-- https://core.ac.uk/download/630817484.pdf -->
+
+<!-- SUMMARY OF LIDAR SCAN MATCHING ALGORITHMS -->
+<!-- https://daniel.lawrence.lu/blog/y2014m11d25/ -->
+
+<!-- Comparison and analysis of scan matching techniques for Cooperative-SLAM -->
+<!-- https://ieeexplore.ieee.org/document/6145953 -->
+
+<!-- https://www.mdpi.com/2077-1312/11/4/840 -->
