@@ -169,7 +169,7 @@ The loop matcher searches more broadly for similar scans to close loops when the
 
 #### ICP
 
-ICP is a common [point cloud registration][10] technique used in robots. One common ICP use-case is to estimate the pose of a known object in an environment (by matching a model of the object to a lidar or stereo pointcloud of the environment). However, ICP is an iterative optimization technique, and is susceptible to poor initial guesses. In the case of SLAM, if the initial guess provided by wheel odometry and IMU data is inaccurate, it is likely for ICP to get stuck in a local minimum. This is because the cost-landscape of aligning two pointclouds is very non-convex. SLAM Toolbox does not use ICP, but instead CSM.
+ICP is a common [point cloud registration][10] technique used in robots. One common ICP use-case is to estimate the pose of a known object in an environment (by matching a model of the object to a lidar or stereo pointcloud of the environment). However, ICP is an iterative optimization technique, and is susceptible to poor initial guesses. In the case of SLAM, if the initial guess provided by wheel odometry and IMU data is inaccurate, it is likely for ICP to get stuck in a local minimum. This is because the cost-landscape of aligning two pointclouds is very non-convex. SLAM Toolbox does not use ICP, but instead MCSM.
 
 <hr class="medium">
 
