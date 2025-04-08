@@ -64,6 +64,7 @@ I spent some time learning the algorithms used in SLAM Toolbox and the purpose o
 ### SLAM Toolbox Parameters Explained
 
 
+
 <div markdown="1" class="sub-block neutral med-top-m">
 <div class="title_small">odom_frame, map_frame, base_frame</div>
 <hr class="small">
@@ -87,6 +88,7 @@ The SLAM node is subscribed to the `/tf` topic, where it listens for transforms 
 </div>
 
 
+
 <div markdown="1" class="sub-block neutral med-top-m">
 <div class="title_small">scan_topic</div>
 <hr class="small">
@@ -103,6 +105,7 @@ This topic is how slam_toolbox recieves the [LaserScan][14] messages. These mess
 </div>
 
 
+
 <!-- <div markdown="1" class="sub-block neutral med-top-m">
 <div class="title_small">localization_on_configure </div>
 <hr class="small">
@@ -114,6 +117,7 @@ This topic is how slam_toolbox recieves the [LaserScan][14] messages. These mess
 - AMCL localization
 
 </div> -->
+
 
 
 <div markdown="1" class="sub-block neutral med-top-m large-bot-m">
@@ -141,9 +145,6 @@ In summary, these parameters limit the number of scans that make it into the pos
 - The documentation mentions that `minimum_time_interval` is for syncronous mode only, but it seems to be used in asynchronous mode [too](https://github.com/SteveMacenski/slam_toolbox/blob/191cdb52d7816a6f2e1f4986d7e5085deb55690e/src/slam_toolbox_async.cpp#L57).
 
 </div>
-
-<!-- `minimum_travel_distance` -> `m_pMinimumTravelDistance`
-`minimum_travel_heading` ->`m_pMinimumTravelHeading` -->
 
 </div>
 
@@ -270,6 +271,7 @@ Covariance measures the...
 </div> -->
 
 
+
 <div markdown="1" class="sub-block neutral large-top-m">
 <div class="title">Scan Match Multi-Scan Map</div>
 <div class="title_xsmall">scan_buffer_size, scan_buffer_maximum_scan_distance</div>
@@ -283,13 +285,8 @@ Additionally, I *think* that edges (constraints) in the pose graph are created b
 
 Scan matching can also be completely turned of with `use_scan_matching`. Without this, I cannot get any pose graph to appear on the `slam_toolbox/graph_visualization` topic, which makes me think a pose graph is not created (even with edges *just* based on sensor odometry).
 
-<!-- #### Variable Mappings
-`scan_buffer_size` -> Mapper -> `m_pScanBufferSize` -> ScanManager -> `m_RunningBufferMaximumSize`
-`scan_buffer_maximum_scan_distance` -> Mapper -> `m_pScanBufferMaximumScanDistance` -> ScanManager -> `m_RunningBufferMaximumDistance`
-`use_scan_matching` -> `m_pUseScanMatching`
--->
-
 </div>
+
 
 
 <div markdown="1" class="sub-block neutral large-top-m">
@@ -300,17 +297,13 @@ Scan matching can also be completely turned of with `use_scan_matching`. Without
 
 In scan matching, the ROS2 LaserScan messages themselves do not form the map and scan. Instead, the messages are transformed into grids, which are cropped and blurred versions of the original messages. This is done in `ScanMatcher::AddScan`, where the scans are iterated over, and the corresponding cells in the `m_pCorrelationGrid` are marked as occupied. I think of the correlation grid as a grayscale image aggregation of historical scans.
 
+Each `ScanMatcher` takes these three values as inputs into the static `Create` method, and they influence the dimensions and attributes of the `ScanMatcher`'s `CorrelationGrid` and `Grid` member variables.
+
 When the static method `ScanMatcher::Create` is called, one of the member variables is `pCorrelationGrid`. So `correlation_search_space_dimension` defines the map size (how much cropping is done), and `correlation_search_space_smear_deviation` describes how much map blurring is done for the `m_pSequentialScanMatcher`. The other two parameters do the same for the `m_pLoopScanMatcher`. The number of cells in the grid is not actually `...search_space_dimension` itself, but the `...search_space_dimension` / `...search_space_resolution` (plus some additional padding).
 
 #### Scan Match Translation Search
 
 As I talked about above, MCSM uses a triple for-loop to loop over the given x, y, and yaw ranges in step sizes based on given resolutions. As you will see in the box below, for yaw, these ranges and resolutions can be explicitly defined by the user. However, for x and y, the range and resolution of the search is determined by the size (`search_space_dimension`) and resolution (`...search_space_resolution`) of the correlation grid itself in `ScanMatcher::MatchScan`. The coarse resolution is hardcoded to be twice that of the fine resolution.
-
-<!-- min_pass_through -> m_pMinPassThrough, occupancy_threshold -> m_pOccupancyThreshold -->
-<!-- correlation grid creation? (LaserScans to Grid) -->
-<!-- these are in Karto.h, which is in Mapper.h, which is in Mapper.cpp -->
-<!-- used in the OccupancyGrid class, in UpdateCell -->
-<!-- although i don't know where this OccupancyGrid class gets used -->
 
 <div markdown="1" class="sub-block x-urgent med-top-m med-bot-m">
 
@@ -320,22 +313,24 @@ As I talked about above, MCSM uses a triple for-loop to loop over the given x, y
     - `m_pCorrelationGrid->SmearPoint(gridPoint);`
 - What is the difference between `pSearchSpaceProbs` and `pCorrelationGrid`?
 - [ScanMatcher::Create](http://docs.ros.org/en/noetic/api/open_karto/html/classkarto_1_1ScanMatcher.html) is a static class method... why not just use a constructor?
+- what is rangeThreshold in `ScanMatcher::Create`
 
 </div>
 
-<!-- `correlation_search_space_dimension` -> Mapper -> `m_pCorrelationSearchSpaceDimension`
-
-m_pLoopScanMatcher = ScanMatcher::Create(pMapper,
-    m_pMapper->m_pLoopSearchSpaceDimension->GetValue(),
-    m_pMapper->m_pLoopSearchSpaceResolution->GetValue(),
-    m_pMapper->m_pLoopSearchSpaceSmearDeviation->GetValue(), rangeThreshold);
-
-m_pSequentialScanMatcher = ScanMatcher::Create(this,
-    m_pCorrelationSearchSpaceDimension->GetValue(),
-    m_pCorrelationSearchSpaceResolution->GetValue(),
-    m_pCorrelationSearchSpaceSmearDeviation->GetValue(), rangeThreshold); -->
-
 </div>
+
+
+<!-- <div markdown="1" class="sub-block neutral large-top-m large-bot-m">
+<div class="title">Grid Creation</div>
+<div class="title_xsmall">min_pass_through, occupancy_threshold</div>
+<hr class="small">
+
+</div> -->
+
+<!-- correlation grid creation? (LaserScans to Grid) -->
+<!-- these are in Karto.h, which is in Mapper.h, which is in Mapper.cpp -->
+<!-- used in the OccupancyGrid class, in UpdateCell -->
+<!-- although i don't know where this OccupancyGrid class gets used -->
 
 
 <div markdown="1" class="sub-block neutral large-top-m large-bot-m">
@@ -364,11 +359,6 @@ Questions
 
 <!-- These values feel like they should belong to ScanMatcher (they are often used with the above attributes, search space dimension/resolution/smear) (since they are only used in ScanMatch functions), but [ScanMatcher](http://docs.ros.org/en/noetic/api/open_karto/html/classkarto_1_1ScanMatcher.html) is provided by Karto and the constructor requires a Mapper, `m_pMapper`. So we don't have the flexibility to move them over anyways. -->
 
-<!-- `coarse_search_angle_offset` -> `Mapper` -> `m_pCoarseSearchAngleOffset`
-`coarse_angle_resolution` -> `Mapper` -> `m_pCoarseAngleResolution`
-`fine_search_angle_offset` -> `Mapper` -> `m_pFineSearchAngleOffset`
-`use_response_expansion` -> `Mapper` -> `m_pUseResponseExpansion` -->
-
 </div>
 
 
@@ -381,7 +371,8 @@ Loop closing, as shown in the image above, makes SLAM powerful because it correc
 
 <div markdown="1" class="sub-block x-urgent med-top-m med-bot-m">
 
-Questions/TODO:
+#### Questions/TODO:
+
 - I need to better understand chains
 
 </div>
@@ -422,11 +413,6 @@ $$
 So this penalty is bounded between the minimum and 1 (as long as the variance penalty is not negative), and it scales the response of the score found via scan matching in `GetResponse`.
 
 This motion model is not used for the loop closure scan matcher (`doPenalize` is set to false).
-
-<!-- `distance_variance_penalty` -> Mapper -> `m_pDistanceVariancePenalty`
-`angle_variance_penalty` -> `m_pAngleVariancePenalty`
-`minimum_angle_penalty` -> `m_pMinimumAnglePenalty`
-`minimum_distance_penalty` -> `m_pMinimumDistancePenalty` -->
 
 </div>
 
