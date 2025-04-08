@@ -14,7 +14,7 @@ categories: jekyll update
 
 > "SLAM systems require extensive parameter tuning in order to work correctly for a given scenario." <sup>3</sup>
  
-I struggled through this when setting up SLAM Toolbox with Gazebo. Using the default parameters, the algorithm failed to find loop closures in my simulated environment. SLAM Toolbox has [well-documented descriptions][20] of each parameter, but given the large number of parameters, I had trouble understanding which parameters to tune first and how changes would affect the end result.
+I struggled through this when setting up SLAM Toolbox with Gazebo. Using the default parameters, the algorithm failed to find loop closures in my simulated environment. SLAM Toolbox has [well-documented descriptions][9] of each parameter, but given the large number of parameters, I had trouble understanding which parameters to tune first and how changes would affect the end result.
 
 After learning the algorithms used in SLAM Toolbox, I was able to create a cleaner map by tuning the default parameters to my use-case, as shown below.
 
@@ -73,18 +73,18 @@ After learning the algorithms used in SLAM Toolbox, I was able to create a clean
 
 The SLAM node is subscribed to the `/tf` topic, where it listens for transforms from odom_frame -> base_frame provided by a seperate odometry node. For me, I'm using the ekf_node provided by the robot_localization package, which takes in IMU and wheel encoder measurements to estimate the robot's position.
 
-**Frame Ordering:** slam_toolbox orders its frames to follow [REP105][12]. Because tf2 requires that transforms be connected in a tree, the base_frame cannot have two parents (map and odom). This also intuitively makes sense; if we want to use forward kinematics to calculate the pose of a frame with respect to one of its ancestors, but there are two paths between the two frames, we might have two disagreeing transforms. Instead, a map_frame -> odom_frame transform is created, which can be described as the correction for the drift of the odometry over time. Because the odometry transformations are often published at a much higher rate than the map updates, a second benefit of ordering the frames from map_frame -> odom_frame -> base_frame is that our map_frame -> base_frame now has the benefits of both the fast and continuous odometry updates and the slower non-continuous error-correction benefits provided by the map.
+**Frame Ordering:** slam_toolbox orders its frames to follow [REP105][6]. Because tf2 requires that transforms be connected in a tree, the base_frame cannot have two parents (map and odom). This also intuitively makes sense; if we want to use forward kinematics to calculate the pose of a frame with respect to one of its ancestors, but there are two paths between the two frames, we might have two disagreeing transforms. Instead, a map_frame -> odom_frame transform is created, which can be described as the correction for the drift of the odometry over time. Because the odometry transformations are often published at a much higher rate than the map updates, a second benefit of ordering the frames from map_frame -> odom_frame -> base_frame is that our map_frame -> base_frame now has the benefits of both the fast and continuous odometry updates and the slower non-continuous error-correction benefits provided by the map.
 
 <!-- **Calculating map_frame -> odom_frame:** Test -->
 
 <div markdown="1" class="sub-block x-urgent med-top-m">
 
-#### Questions
+#### Questions/TODO
 
 <!-- - what is the origin of the map frame? the starting point? the dock? -->
 <!-- - is the odometry information provided by odom_frame->base_frame from the /tf topic used for any else? How is odometry information added to the pose graph? -->
 <!-- - if the *use_scan_matching* parameter is turned on, then I believe visual odometry is also calculated by slam_toolbox. Is this also published to /tf (so a second node is now publishing odom_frame -> base_frame), or just used internally for the pose graph, and part of map -> base_frame? -->
-- why does the ekf_node need access to the map_frame? this feels like a circular dependency? The [tutorial][13] seems to say its ok to have one ekf_node that just performs continuous odometry and publishes odom_frame -> base_frame, and there can be a second ekf_node that accounts for noncontinuous, jumping, global data provided by a map_transform.
+- why does the ekf_node need access to the map_frame? this feels like a circular dependency? The [tutorial][7] seems to say its ok to have one ekf_node that just performs continuous odometry and publishes odom_frame -> base_frame, and there can be a second ekf_node that accounts for noncontinuous, jumping, global data provided by a map_transform.
 
 </div>
 </div>
@@ -95,11 +95,11 @@ The SLAM node is subscribed to the `/tf` topic, where it listens for transforms 
 <div class="title_small">scan_topic</div>
 <hr class="small">
 
-This topic is how slam_toolbox recieves the [LaserScan][14] messages. These messages have a timestamp.
+This topic is how slam_toolbox recieves the [LaserScan][8] messages. These messages have a timestamp.
 
 <div markdown="1" class="sub-block x-urgent med-top-m">
 
-#### Questions
+#### Questions/TODO
 <!-- - how is a scan paired with a pose to create a PosedScan? -->
 - what if we want to add other sensor data?
 
@@ -142,7 +142,7 @@ In summary, these parameters limit the number of scans that make it into the pos
 - Insufficient nodes: less chances for loop closure, less matching points in adjacent scans making scan matching harder? increase number of nodes when no loop closures found?
 - Excessive nodes: more complex optimization? reduce number of nodes when laggy? optimizer fails?
 
-#### Questions
+#### Questions/TODO
 
 - why square `m_pMinimumTravelDistance` AND the true distance during the comparison, could just compare absolute values?
 - The documentation mentions that `minimum_time_interval` is for syncronous mode only, but it seems to be used in asynchronous mode [too](https://github.com/SteveMacenski/slam_toolbox/blob/191cdb52d7816a6f2e1f4986d7e5085deb55690e/src/slam_toolbox_async.cpp#L57).
@@ -157,7 +157,11 @@ In summary, these parameters limit the number of scans that make it into the pos
 
 ### Interlude: Explaining MCSM Scan Matching
 
-One of the most important part of SLAM algorithms is scan matching: the processes of aligning two pointclouds to determine the transformation (translation and rotation) between them. SLAM Toolbox uses two scan matchers, `m_pSequentialScanMatcher` and `m_pLoopScanMatcher`. The sequential matcher finds transformations between scans taken sequentially, which is used to define edge constraints between nodes in the pose graph and for visual odometry. The loop matcher searches more broadly for similar scans to close loops when the robot revisits places. These closures create edge constriants in the pose graph connecting more distant nodes.
+One of the most important part of SLAM algorithms is scan matching: the processes of aligning two pointclouds to determine the transformation (translation and rotation) between them. SLAM Toolbox uses two scan matchers, `m_pSequentialScanMatcher` and `m_pLoopScanMatcher`.
+
+The sequential matcher finds transformations between scans taken sequentially, which is used to define edge constraints between nodes in the pose graph and for visual odometry.
+
+The loop matcher searches more broadly for similar scans to close loops when the robot revisits places. These loop closures create edge constriants in the pose graph connecting more distant nodes. Loop closing makes SLAM powerful because it corrects error accumulated over time. Without loop closing, SLAM just becomes a fancy dead-reckoning system.
 
 ![Pose Graph Showing Edges from Both Scan Matchers](/assets/images/slam_parameters/loop_closure.png)
 
@@ -165,7 +169,7 @@ One of the most important part of SLAM algorithms is scan matching: the processe
 
 #### ICP
 
-ICP is a common point cloud registration technique used in robots. One common ICP use-case is to estimate the pose of a known object in an environment (by matching a model of the object to a lidar or stereo pointcloud of the environment). However, ICP is susceptible to poor initial guesses. In the case of SLAM, if the initial guess provided by wheel odometry and IMU data is inaccurate, it is likely for ICP to get stuck in a local minimum. This is because the cost-landscape of aligning two pointclouds is very non-convex.
+ICP is a common [point cloud registration][10] technique used in robots. One common ICP use-case is to estimate the pose of a known object in an environment (by matching a model of the object to a lidar or stereo pointcloud of the environment). However, ICP is an iterative optimization technique, and is susceptible to poor initial guesses. In the case of SLAM, if the initial guess provided by wheel odometry and IMU data is inaccurate, it is likely for ICP to get stuck in a local minimum. This is because the cost-landscape of aligning two pointclouds is very non-convex.
 
 <hr class="medium">
 
@@ -190,13 +194,13 @@ This says that the probability of the robot being at position $$x_i$$ (given las
     - the probability of the robot being at position $$x_i$$ given last position $$x_{i-1}$$ and encoder/IMU sensor readings $$u$$ (dead reckoning)
     - Note: $$u$$ is the standard convention representing control inputs. However, I believe it's used here to represent IMU and wheel encoder sensor data.
 
-Our guess of the current position will be the mean of $$p(x_i \vert x_{i-1},u,m,z)$$. However, having the distribution is useful because the standard deviation gives us a confidence interval. Confidence can be encoded into each edge constraint in the pose graph by specifying how "rigid" an edge is during optimization. For example, if the robot is travelling down a hallway that is long in the X direction, it will have more pointcloud points on the nearby walls above and below it in the Y direction. Consequently, it will have high confidence in it's Y position, and low confidence in it's X position, as reflected in the covariance.
+Our guess of the current position will be the mean of $$p(x_i \vert x_{i-1},u,m,z)$$. However, having the distribution is useful because the variance gives us a confidence interval. Confidence can be encoded into each edge constraint in the pose graph by specifying how "rigid" an edge is during optimization. For example, if the robot is travelling down a hallway that is long in the X direction, it will have more pointcloud points on the nearby walls above and below it in the Y direction. Consequently, it will have high confidence in it's Y position, and low confidence in it's X position, as reflected in the covariance.
 
 <hr class="medium">
 
 #### CSM Brute Search Steps
 
-The process of finding the best translation between a scan and a map is...
+The process of finding the best translation between a scan and a map via CSM Scan Matching is...
 
 1. **User-Specified Inputs**
 
@@ -208,11 +212,11 @@ The process of finding the best translation between a scan and a map is...
 
     - Create a lookup-table using the map, that returns the probability of observing a point existing at some position in the world (high probabilties when near a point in the map)
 
-    - Blur lookup-table to reduce the effects of noisy data
+    - Blur (aka smear) lookup-table to reduce the effects of noisy data
     
     - Construct a lower-resolution lookup-table via max-pooling. This ensures that the low-resolution map will not miss the best possible high-resolution score
 
-4. **Coarse Search**
+3. **Coarse Search**
 
     - Use a quadruple for-loop to score all possible translations in the given ranges using the coarse step size
 
@@ -220,13 +224,13 @@ The process of finding the best translation between a scan and a map is...
 
     - The fourth for-loop iterates over each point in the current scan to score via the observation and motion models
 
-5. **Fine Search**
+4. **Fine Search**
 
     - Using the best transformation from the coarse-search, re-search that coarse pixel using the fine step size
 
-6. **Return the best transformation**
+5. **Return the best transformation**
 
-This method of using a coarse loop to find the general vicinity of the best transformation, and refining it with a fine loop, is the difference between CSM and MCSM.
+This method of using *both* a coarse loop to find the general vicinity of the best transformation, and refining it with a fine loop, is the difference between CSM and MCSM.
 
 <hr class="medium">
 
@@ -234,15 +238,15 @@ This method of using a coarse loop to find the general vicinity of the best tran
 
 1. In the simplest case, the **map** $$m$$* used for scan matching is just the previous scan. However, multiple previous scans can be combined to increase the pointcloud density, which (1) shows increases accuracy. The number of previous scans used to construct this map can be limited by both a maximum number of scans, or a maximum distance between the current scan and historical scans.
 
-2. To increase the performance of MCSM, (1) recommends keeping the most computationally expensive operation, yaw rotation, in the outermost loop (rotations require trigonometric and multiplicative operations; translation is only additive).
+2. To increase the performance of MCSM, (1) recommends keeping the most computationally expensive operation, yaw rotation, in the outermost loop (rotations require trigonometric and multiplicative operations, while translation is only additive).
 
 3. SLAM Toolbox does the outermost loop in parallel: `tbb::parallel_for_each(m_yPoses, (*this));`
 
-4. Some papers mention using **RANSAC** to sample from the map to reduce the effects of outliers, which may be worth experimenting with in noisy environments. Although I imagine it slows down the scan matching, because it requires another for-loop to test multiple random samples of the map.
+4. Some papers mention using **RANSAC** to sample from the map to reduce the effects of outliers, which may be worth experimenting with in noisy environments. Although I imagine it slows down the scan matching because it requires another for-loop to test multiple random samples of the map.
 
 5. I wonder if a **hybrid approach** could perform better, where a CSM coarse search is used to find a strong initial guess for the ICP algorithm. This might provide more accurate results because the best-possible transformation isn't limited to the accuracy of the fine resolution step size.
 
-6. Experiments from (2) use a coarse step size of 30cm, and fine step size of 3cm. This 10x difference is contrasted by SLAM Toolbox, which only uses a 2x multiplier
+6. Experiments from (2) use a coarse step size of 30cm, and fine step size of 3cm. This 10x multiplier is contrasted by SLAM Toolbox, which only uses a 2x multiplier
     - Rotation is coarse to fine: `0.5 * m_pMapper->m_pCoarseAngleResolution->GetValue()`
     - Translation is fine to coarse: `2 * m_pCorrelationGrid->GetResolution()`
 
@@ -298,7 +302,7 @@ Scan matching can also be completely turned of with `use_scan_matching`. Without
 <div class="title_xsmall">loop_search_space_dimension, loop_search_space_resolution, loop_search_space_smear_deviation</div>
 <hr class="small">
 
-In scan matching, the ROS2 LaserScan messages themselves do not form the map and scan. Instead, the messages are transformed into grids, which are cropped and blurred versions of the original messages. This is done in `ScanMatcher::AddScan`, where the scans are iterated over, and the corresponding cells in the `m_pCorrelationGrid` are marked as occupied. I think of the correlation grid as a grayscale image aggregation of historical scans.
+In scan matching, the ROS2 [LaserScan][8] messages themselves do not form the map and scan. Instead, the messages are transformed into grids, which are cropped and blurred versions of the original messages. This is done in `ScanMatcher::AddScan`, where the scans are iterated over, and the corresponding cells in the `m_pCorrelationGrid` are marked as occupied. I think of the correlation grid as a grayscale image aggregation of historical scans.
 
 Each `ScanMatcher` takes these three values as inputs into the static `Create` method, and they influence the dimensions and attributes of the `ScanMatcher`'s `CorrelationGrid` and `Grid` member variables.
 
@@ -310,7 +314,7 @@ As I talked about above, MCSM uses a triple for-loop to loop over the given x, y
 
 <div markdown="1" class="sub-block x-urgent med-top-m med-bot-m">
 
-#### Questions
+#### Questions/TODO
 
 - Why is the correlation grid blurred after each point from a scan is added, and not after all points are added, or even all scans are added?
     - `m_pCorrelationGrid->SmearPoint(gridPoint);`
@@ -354,7 +358,8 @@ These values are used in the yaw for-loop of MCSM to define the range of possibl
 
 <div markdown="1" class="sub-block x-urgent med-top-m med-bot-m">
 
-Questions
+#### Questions/TODO
+
 - what defines a sufficient match? AKA how can the `bestResponse` be 0.0, each translation must have *some* score.
 - When running `use_response_expansion` loops, maybe add functitionality to not re-search the inner range?
 - Why is a `fine_search_angle_offset` parameter given? Once a coarse maximum score is found, don't we know that best score must be somewhere within the `coarse_angle_resolution`?
@@ -398,8 +403,6 @@ This motion model is not used for the loop closure scan matcher (`doPenalize` is
 <div class="title">Chains and Loop Closing</div>
 <div class="title_xsmall">do_loop_closing, loop_match_minimum_chain_size, loop_match_maximum_variance_coarse, loop_match_minimum_response_coarse, loop_match_minimum_response_fine</div>
 <hr class="small">
-
-Loop closing, as shown in the image above, makes SLAM powerful because it corrects error accumulated over time. Without loop closing, SLAM just becomes a fancy dead-reckoning system.
 
 <div markdown="1" class="sub-block x-urgent med-top-m med-bot-m">
 
@@ -462,7 +465,7 @@ B. `if (!HasMovedEnough(pScan, pLastScan))*`
 <!-- ______ MESSY NOTES: Factor Graphs and Pose Graphs ______ -->
 <!--
 [PPF of SLAM Paper][2]
-[video][8]
+[video][3]
 
 - Graph SLAM is the least-squares approach to SLAM
     - overdetermined system. Equations from measurements and unknowns are robot/feature positions
@@ -492,7 +495,7 @@ B. `if (!HasMovedEnough(pScan, pLastScan))*`
 <!-- ______ MESSY NOTES: Data Association and Loop Closures ______ -->
 <!--
 [PPF of SLAM Paper][2]
-[video][10]
+[video][4]
 
 - Short-term: matches between consecutive frames (via optimal flow/descriptor matching)
 - Long-term: new measurements to old landmarks for loop closure (via bag-of-words, tree search, other robust methods)
@@ -509,7 +512,7 @@ B. `if (!HasMovedEnough(pScan, pLastScan))*`
 
 <!-- ______ MESSY NOTES: SLAM toolbox specific ______ -->
 <!--
-[video][11]
+[video][5]
 
 - The graph stores nodes and confidences (the covariance matrix)
 - the pose graph is sensor data agnostic (same with all graph slam, it just cares about the constraints created by the front end)
@@ -578,6 +581,7 @@ B. `if (!HasMovedEnough(pScan, pLastScan))*`
 -->
 
 
+
 ### Papers
 
 1. Liu, Haiqiao, et al. “Correlation scan matching algorithm based on multi‐resolution auxiliary historical point cloud and lidar simultaneous localisation and mapping positioning application.” *IET Image Processing*, vol. 14, no. 14, 14 Oct. 2020, pp. 3596–3601, https://doi.org/10.1049/iet-ipr.2019.1657.
@@ -586,37 +590,45 @@ B. `if (!HasMovedEnough(pScan, pLastScan))*`
 
 
 
+<!-- ______________ LINKS ______________ -->
+
+<!-- Understanding SLAM Using Pose Graph Optimization | Autonomous Navigation, Part 3 -->
 [1]: https://www.youtube.com/watch?v=saVZtgPyyJQ
+
+<!-- Past, Present, and Future of Simultaneous Localization And Mapping -->
 [2]: https://arxiv.org/abs/1606.05830
 
-<!-- Older methods -->
-[3]: https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=1638022
-[4]: https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=1678144
+<!-- SLAM Course - 15 - Least Squares SLAM - Cyrill Stachniss -->
+[3]: https://www.youtube.com/watch?v=VRGOLRGwAjg
+<!-- A Tutorial on Graph-Based SLAM -->
+<!-- https://github.com/ZohebAbai/mobile_sensing_robotics/blob/main/A%20Tutorial%20on%20Graph-Based%20SLAM.pdf -->
+
+<!-- SLAM Course - 12 - Scan-Matching in 5 Min - Cyrill Stachniss -->
+[4]: https://www.youtube.com/watch?v=nvFcN2-NqRc
+
+<!-- ROSCon 2019 Macau: On Use of SLAM Toolbox -->
+[5]: https://vimeo.com/378682207
+
+[6]: https://www.ros.org/reps/rep-0105.html
+[7]: https://docs.nav2.org/setup_guides/odom/setup_robot_localization.html
+[8]: https://docs.ros2.org/foxy/api/sensor_msgs/msg/LaserScan.html
+[9]: https://github.com/SteveMacenski/slam_toolbox?tab=readme-ov-file#configuration
+[10]: https://en.wikipedia.org/wiki/Point-set_registration
+
+<!-- Older DURRANT-WHYTE papers -->
+<!-- https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=1638022 -->
+<!-- https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=1678144 -->
 
 <!-- Unread (ROS based SLAM) -->
-[5]: https://webthesis.biblio.polito.it/29366/1/tesi.pdf
-[6]: https://www.researchgate.net/publication/385163294_ROS_2_Robot_With_SLAM/link/6718baf068ac304149abfff9/download?_tp=eyJjb250ZXh0Ijp7ImZpcnN0UGFnZSI6InB1YmxpY2F0aW9uIiwicGFnZSI6InB1YmxpY2F0aW9uIn19
-[7]: https://joss.theoj.org/papers/10.21105/joss.02783.pdf
+<!-- https://webthesis.biblio.polito.it/29366/1/tesi.pdf -->
+<!-- https://www.researchgate.net/publication/385163294_ROS_2_Robot_With_SLAM/link/6718baf068ac304149abfff9/download?_tp=eyJjb250ZXh0Ijp7ImZpcnN0UGFnZSI6InB1YmxpY2F0aW9uIiwicGFnZSI6InB1YmxpY2F0aW9uIn19 -->
+<!-- https://joss.theoj.org/papers/10.21105/joss.02783.pdf -->
 
-<!-- Video and paper mentioned in video -->
-[8]: https://www.youtube.com/watch?v=VRGOLRGwAjg
-[9]: https://github.com/ZohebAbai/mobile_sensing_robotics/blob/main/A%20Tutorial%20on%20Graph-Based%20SLAM.pdf
+<!-- Karto Parameters Tutorial -->
+<!-- http://www.yahboom.net/public/upload/upload-html/1665711621/8.karto%20mapping%20algorithm.html -->
 
-[10]: https://www.youtube.com/watch?v=nvFcN2-NqRc
+<!-- Research of Autonomous Navigation for Mobile Robots Using Karto SLAM Algorithm Under ROS -->
+<!-- https://www.kexuetongbao-csb.com/volume/CSB/69/04/research-of-autonomous-navigation-for-mobile-robots-using-karto-slam-algorithm-under-ros-6663dc3dda4ce.pdf -->
 
-[11]: https://vimeo.com/378682207
-
-[12]: https://www.ros.org/reps/rep-0105.html
-[13]: https://docs.nav2.org/setup_guides/odom/setup_robot_localization.html
-[14]: https://docs.ros2.org/foxy/api/sensor_msgs/msg/LaserScan.html
-
-<!-- Karto parameters -->
-[15]: http://www.yahboom.net/public/upload/upload-html/1665711621/8.karto%20mapping%20algorithm.html
-
-<!-- Karto paper (seems similar to codebase). Coarse/Fine -->
-[16]: https://www.kexuetongbao-csb.com/volume/CSB/69/04/research-of-autonomous-navigation-for-mobile-robots-using-karto-slam-algorithm-under-ros-6663dc3dda4ce.pdf
-[17]: https://april.eecs.umich.edu/pdfs/olson2009icra.pdf
-[18]: https://ietresearch.onlinelibrary.wiley.com/doi/epdf/10.1049/iet-ipr.2019.1657
-[19]: https://citeseerx.ist.psu.edu/document?repid=rep1&type=pdf&doi=ce0f8e87fb01bc09b2e7b75c34f80e4f04ae839a
-
-[20]: https://github.com/SteveMacenski/slam_toolbox?tab=readme-ov-file#configuration
+<!-- Many-to-Many Multi-Resolution Scan Matching -->
+<!-- https://citeseerx.ist.psu.edu/document?repid=rep1&type=pdf&doi=ce0f8e87fb01bc09b2e7b75c34f80e4f04ae839a -->
