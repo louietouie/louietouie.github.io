@@ -85,6 +85,14 @@ hr.small {
     border-top: 1px solid hsla(196, 25%, 35%, 0.25);
 }
 
+hr.medium {
+    margin-top: 3rem;
+    margin-bottom: 3rem;
+    border: 0;
+    height: 0;
+    border-top: 1px solid hsla(196, 25%, 35%, 0.25);
+}
+
 .small-top-m {
     margin-top: 0.5rem;
 }

@@ -74,12 +74,16 @@ The SLAM node is subscribed to the `/tf` topic, where it listens for transforms 
 
 **Calculating map_frame -> odom_frame:** Test
 
-Questions
-- what is the origin of the map frame? the starting point? the dock?
-- is the odometry information provided by odom_frame->base_frame from the /tf topic used for any else? How is odometry information added to the pose graph?
-- if the *use_scan_matching* parameter is turned on, then I believe visual odometry is also calculated by slam_toolbox. Is this also published to /tf (so a second node is now publishing odom_frame -> base_frame), or just used internally for the pose graph?
+<div markdown="1" class="sub-block x-urgent med-top-m">
+
+#### Questions
+
+<!-- - what is the origin of the map frame? the starting point? the dock? -->
+<!-- - is the odometry information provided by odom_frame->base_frame from the /tf topic used for any else? How is odometry information added to the pose graph? -->
+<!-- - if the *use_scan_matching* parameter is turned on, then I believe visual odometry is also calculated by slam_toolbox. Is this also published to /tf (so a second node is now publishing odom_frame -> base_frame), or just used internally for the pose graph, and part of map -> base_frame? -->
 - why does the ekf_node need access to the map_frame? this feels like a circular dependency? The [tutorial][13] seems to say its ok to have one ekf_node that just performs continuous odometry and publishes odom_frame -> base_frame, and there can be a second ekf_node that accounts for noncontinuous, jumping, global data provided by a map_transform.
 
+</div>
 </div>
 
 
@@ -89,14 +93,17 @@ Questions
 
 This topic is how slam_toolbox recieves the [LaserScan][14] messages. These messages have a timestamp.
 
-Questions
-- how is a scan paired with a pose to create a PosedScan?
+<div markdown="1" class="sub-block x-urgent med-top-m">
+
+#### Questions
+<!-- - how is a scan paired with a pose to create a PosedScan? -->
 - what if we want to add other sensor data?
 
 </div>
+</div>
 
 
-<div markdown="1" class="sub-block neutral med-top-m">
+<!-- <div markdown="1" class="sub-block neutral med-top-m">
 <div class="title_small">localization_on_configure </div>
 <hr class="small">
 
@@ -106,7 +113,7 @@ Questions
 - KD Tree Search
 - AMCL localization
 
-</div>
+</div> -->
 
 
 <div markdown="1" class="sub-block neutral med-top-m large-bot-m">
@@ -115,19 +122,28 @@ Questions
 
 These parameters affect when a laser scan is processed and added to the pose graph.
 
-If the time between two scans (retrieved from the timestamp in the messages' headers) is less than the `minimum_time_interval`, `SlamToolbox::shouldProcessScan` returns false and the scan is either not added to the pose graph (asyncronous mode), or not added to the queue to process the scan (synchronous mode). 
+If the time between two scans (retrieved from the timestamp in the messages' headers) is less than the `minimum_time_interval`, `SlamToolbox::shouldProcessScan` returns false and the scan is either not added to the pose graph (asyncronous mode), or not added to the queue to add at to the pose graph (synchronous mode). 
 
-The second two parameters map to `m_pMinimumTravelDistance` and `m_pMinimumTravelHeading`, which are both used in `Mapper::HasMovedEnough`. This measures position changes between the current candidate pose and the last pose added to the pose graph. These checks are made in the `Mapper::Process` method, called from `SlamToolbox::addScan`. If the pose of the robot in the current scan has not moved enough, then scan matching will not be done and the scan will not be added to the pose graph. These checks are *not* done on the first scan, or when starting a new session with an old map.
+The second two parameters are both used in `Mapper::HasMovedEnough`. This measures position changes between the current candidate pose and the last pose added to the pose graph. These checks are made in the `Mapper::Process` method, called from `SlamToolbox::addScan`. If the pose of the robot in the current scan has not moved enough, then the scan will not be added to the pose graph. These checks are *not* done on the first scan and when starting a new session with an old map.
 
-<span style="color:red">
+<div markdown="1" class="sub-block x-urgent med-top-m">
+
+#### Tuning
+
 In summary, these parameters limit the number of scans that make it into the pose graph. It is important that nodes in a pose graph are not too close or too far apart, because...
 
-- <span style="color:red">too few nodes: less chances for loop closure, less matching points in adjacent scans making scan matching harder? increase number of nodes when no loop closures found?
-- <span style="color:red">too many nodes: more complex optimization? reduce number of nodes when laggy? optimizer fails?
+- Insufficient nodes: less chances for loop closure, less matching points in adjacent scans making scan matching harder? increase number of nodes when no loop closures found?
+- Excessive nodes: more complex optimization? reduce number of nodes when laggy? optimizer fails?
 
-Questions
+#### Questions
+
 - why square `m_pMinimumTravelDistance` AND the true distance during the comparison, could just compare absolute values?
 - The documentation mentions that `minimum_time_interval` is for syncronous mode only, but it seems to be used in asynchronous mode [too](https://github.com/SteveMacenski/slam_toolbox/blob/191cdb52d7816a6f2e1f4986d7e5085deb55690e/src/slam_toolbox_async.cpp#L57).
+
+</div>
+
+<!-- `minimum_travel_distance` -> `m_pMinimumTravelDistance`
+`minimum_travel_heading` ->`m_pMinimumTravelHeading` -->
 
 </div>
 
@@ -137,17 +153,17 @@ Questions
 
 ### Interlude: Explaining MCSM Scan Matching
 
-One of the most important part of SLAM algorithms is scan matching: the processes of aligning two pointclouds to determine the transformation (translation and rotation) between them. SLAM Toolbox uses two scan matchers, `m_pSequentialScanMatcher` and `m_pLoopScanMatcher`. The sequential matcher finds transformations between scans taken sequentially, which is used to define edge constraints between nodes in the pose graph and for visual odometry. The loop matcher looks more broadly for similar scans to close loops when the robot revisits places.
+One of the most important part of SLAM algorithms is scan matching: the processes of aligning two pointclouds to determine the transformation (translation and rotation) between them. SLAM Toolbox uses two scan matchers, `m_pSequentialScanMatcher` and `m_pLoopScanMatcher`. The sequential matcher finds transformations between scans taken sequentially, which is used to define edge constraints between nodes in the pose graph and for visual odometry. The loop matcher searches more broadly for similar scans to close loops when the robot revisits places. These closures create edge constriants in the pose graph connecting more distant nodes.
 
 ![Pose Graph Showing Edges from Both Scan Matchers](/assets/images/slam_parameters/loop_closure.png)
 
-<hr class="small">
+<hr class="medium">
 
 #### ICP
 
-ICP is a common point cloud registration technique used in robots. It is used for things like estimating the pose of a known object in an environment (by matching a model of the object to a lidar or stereo pointcloud of the environment). However, ICP is susceptible to poor initial guesses. In the case of SLAM, if the initial guess provided by wheel odometry and IMU data is inaccurate, it is likely for ICP to get stuck in a local minimum. This is because the cost-landscape of aligning two pointclouds is very non-convex.
+ICP is a common point cloud registration technique used in robots. One common ICP use-case is to estimate the pose of a known object in an environment (by matching a model of the object to a lidar or stereo pointcloud of the environment). However, ICP is susceptible to poor initial guesses. In the case of SLAM, if the initial guess provided by wheel odometry and IMU data is inaccurate, it is likely for ICP to get stuck in a local minimum. This is because the cost-landscape of aligning two pointclouds is very non-convex.
 
-<hr class="small">
+<hr class="medium">
 
 #### CSM (Motion model + Observation model)
 
@@ -161,53 +177,78 @@ $$
 p(x_i \vert x_{i-1},u,m,z) \propto p(z \vert x_i,m) * p(x_i \vert x_{i-1},u)
 $$
 
-This says that the probability of the robot being at position $$x_i$$ (given it's last position $$x_{i-1}$$, the commands applied to the motors $$u$$, the map $$m$$, and the scans $$z$$) is proportional to the **observation model * motion model**. 
+This says that the probability of the robot being at position $$x_i$$ (given last position $$x_{i-1}$$, motor commands $$u$$, map $$m$$, and scans $$z$$) is proportional to the **observation model * motion model**. 
 
-- **observation model:** the probability of observing $$z$$ at $$x_i$$ in the map $$m$$ (found via scan-matching, better matches have higher probability)
-- **motion model:** the probability of the robot being at position $$x_i$$ given it's previous position $$x_{i-1}$$ and the sensor readings $$u$$ (found via using odometry/IMU data to perform dead reckoning)
-    - Note: the motion model does talk about using $$u$$, which is the standard convention representing control inputs. However, I believe we are using it to represent IMU and wheel encoder sensor data, is this correct?
+- **Observation model:** 
+    - the probability of observing $$z$$ at $$x_i$$ in the map $$m$$
+    - found via scan-matching, better matches have higher probability
+- **Motion model:**
+    - the probability of the robot being at position $$x_i$$ given last position $$x_{i-1}$$ and encoder/IMU sensor readings $$u$$ (dead reckoning)
+    - Note: $$u$$ is the standard convention representing control inputs. However, I believe it's used here to represent IMU and wheel encoder sensor data.
 
-Our guess of the current position will be the mean of $$p(x_i \vert x_{i-1},u,m,z)$$. However, having the distribution is useful, because the standard deviation gives us a confidence interval, which can be used to give each edge constraint in the pose graph different strengths (how "rigid" an edge is). For example, if the robot is travelling down a hallway that is long in the X direction, it will have more pointcloud points on the nearby walls above and below it in the Y direction. This allows it to have high confidence in it's Y position, and low confidence in it's X position, which is reflected in the covariance.
+Our guess of the current position will be the mean of $$p(x_i \vert x_{i-1},u,m,z)$$. However, having the distribution is useful because the standard deviation gives us a confidence interval. Confidence can be encoded into each edge constraint in the pose graph by specifying how "rigid" an edge is during optimization. For example, if the robot is travelling down a hallway that is long in the X direction, it will have more pointcloud points on the nearby walls above and below it in the Y direction. Consequently, it will have high confidence in it's Y position, and low confidence in it's X position, as reflected in the covariance.
 
-<hr class="small">
+<hr class="medium">
 
-#### CSM Brute Search
+#### CSM Brute Search Steps
 
 The process of finding the best translation between a scan and a map is...
 
-1. Given ranges for x, y, and yaw for maximum translations and rotations
-2. Given step sizes (aka resolutions) in coarse and fine increments for translations and rotations
-3. Create a lookup-table using the map, that returns the probability of observing a point existing at some position in the world (high probabilties when near a point in the map)
+1. **User-Specified Inputs**
+
+    - **Ranges**: bounds for x, y, and yaw for maximum translations and rotations
+
+    - **Resolutions**: step sizes in coarse and fine increments for translations and rotations
+
+2. **Lookup Table**
+
+    - Create a lookup-table using the map, that returns the probability of observing a point existing at some position in the world (high probabilties when near a point in the map)
+
     - Blur lookup-table to reduce the effects of noisy data
-    - Construct a lower-resolution lookup-table via max-pooling. This ensures that the low-resolution map will not miss the best possible high resolution score
-    - how is this different than using the map directly
-3. Use a quadruple for-loop to score all possible translations in the given ranges using the coarse step size
-    - the first three for-loops iterate over all possible x, y, yaw transformations
-    - the fourth for-loop iterates over each point in the current scan to score via the lookup table
-4. Using the best transformation from the coarse-search, re-search that coarse pixel using the fine step size
-5. Return the best transformation
+    
+    - Construct a lower-resolution lookup-table via max-pooling. This ensures that the low-resolution map will not miss the best possible high-resolution score
+
+4. **Coarse Search**
+
+    - Use a quadruple for-loop to score all possible translations in the given ranges using the coarse step size
+
+    - The first three for-loops iterate over all possible x, y, yaw transformations
+
+    - The fourth for-loop iterates over each point in the current scan to score via the observation and motion models
+
+5. **Fine Search**
+
+    - Using the best transformation from the coarse-search, re-search that coarse pixel using the fine step size
+
+6. **Return the best transformation**
 
 This method of using a coarse loop to find the general vicinity of the best transformation, and refining it with a fine loop, is the difference between CSM and MCSM.
 
-<hr class="small">
+<hr class="medium">
 
 #### CSM Other Notes
 
-1. The **CSM map** $$m$$* used for scan matching is just the previous scan. However, multiple previous scans can be combined to increase the pointcloud density, which 1 claims increases accuracy. The number of previous scans to use to construct this map can be limited by both a maximum number of scans, or a maximum distance away previous scans can be from the current scan.
+1. In the simplest case, the **map** $$m$$* used for scan matching is just the previous scan. However, multiple previous scans can be combined to increase the pointcloud density, which (1) shows increases accuracy. The number of previous scans used to construct this map can be limited by both a maximum number of scans, or a maximum distance between the current scan and historical scans.
 
-2. To increase the performance of MCSM, paper 1 recommends keeping the most computationally expensive operation, yaw rotation, in the outermost loop (rotations require trigonometric and multiplicative operations; translation is only additive). SLAM Toolbox actually has rotation on the innermost loop (see `ScanMatcher::operator()`), however, I believe this is OK because I think SLAM Toolbox uses a larger lookup table with all rotations pre-computed, although I am not sure of this (should study `m_pCorrelationGrid` and `m_pGridLookup` for a better answer to this).
+2. To increase the performance of MCSM, (1) recommends keeping the most computationally expensive operation, yaw rotation, in the outermost loop (rotations require trigonometric and multiplicative operations; translation is only additive).
 
-3. SLAM Toolbox does the outermost loops in parallel: `tbb::parallel_for_each(m_yPoses, (*this));`
+3. SLAM Toolbox does the outermost loop in parallel: `tbb::parallel_for_each(m_yPoses, (*this));`
 
 4. Some papers mention using **RANSAC** to sample from the map to reduce the effects of outliers, which may be worth experimenting with in noisy environments. Although I imagine it slows down the scan matching, because it requires another for-loop to test multiple random samples of the map.
 
 5. I wonder if a **hybrid approach** could perform better, where a CSM coarse search is used to find a strong initial guess for the ICP algorithm. This might provide more accurate results because the best-possible transformation isn't limited to the accuracy of the fine resolution step size.
 
-6. Paper 2 talks about using a coarse step size of 30cm, and fine step size of 3cm. This 10x difference is contrasted by SLAM Toolbox, which only uses a 2x multiplier: `0.5 * m_pMapper->m_pCoarseAngleResolution->GetValue()`.
+6. Experiments from (2) use a coarse step size of 30cm, and fine step size of 3cm. This 10x difference is contrasted by SLAM Toolbox, which only uses a 2x multiplier
+    - Rotation is coarse to fine: `0.5 * m_pMapper->m_pCoarseAngleResolution->GetValue()`
+    - Translation is fine to coarse: `2 * m_pCorrelationGrid->GetResolution()`
 
-See resources 1 and 2 for more info on MSCM.
+<div markdown="1" class="sub-block x-urgent med-top-m med-bot-m">
 
-<hr class="small">
+In regards to bullet 2, SLAM Toolbox actually has rotation on the innermost loop (see `ScanMatcher::operator()`). I believe this is OK because I think SLAM Toolbox uses a larger lookup table with all rotations pre-computed, although I am not sure of this (should study `m_pCorrelationGrid` and `m_pGridLookup` for a better answer to this).
+
+</div>
+
+<hr class="medium">
 
 
 
@@ -215,17 +256,7 @@ See resources 1 and 2 for more info on MSCM.
 
 <!-- _________ BACK TO 'SLAM Toolbox Parameters Explained' _________ -->
 
-
-<div markdown="1" class="sub-block neutral large-top-m">
-<div class="title_small">use_scan_matching</div>
-<hr class="small">
-
-Variable Name: `use_scan_matching` -> `m_pUseScanMatching`
-
-</div>
-
-
-<div markdown="1" class="sub-block neutral large-top-m">
+<!-- <div markdown="1" class="sub-block neutral large-top-m">
 <div class="title_small">position_covariance_scale, yaw_covariance_scale</div>
 <hr class="small">
 
@@ -234,9 +265,9 @@ Methods: *SlamToolbox::addScan* -> *SlamToolbox::publishPose*
 
 These scale the covariance of the map_frame->base_frame poses published with the PoseWithCovarianceStamped messages on the /pose topic.
 
-Covariance measures the 
+Covariance measures the...
 
-</div>
+</div> -->
 
 
 <div markdown="1" class="sub-block neutral large-top-m">
@@ -250,11 +281,13 @@ When a new scan is added and `Mapper::Process` is called, the `m_pSequentialScan
 
 Additionally, I *think* that edges (constraints) in the pose graph are created between the current node, and all nodes from the map $$m$$ that were used for scan matching. `LinkChainToScan(pSensorManager->GetRunningScans(rSensorName), pScan, scanPose, rCovariance);`
 
+Scan matching can also be completely turned of with `use_scan_matching`. Without this, I cannot get any pose graph to appear on the `slam_toolbox/graph_visualization` topic, which makes me think a pose graph is not created (even with edges *just* based on sensor odometry).
+
 <!-- #### Variable Mappings
-
 `scan_buffer_size` -> Mapper -> `m_pScanBufferSize` -> ScanManager -> `m_RunningBufferMaximumSize`
-
-`scan_buffer_maximum_scan_distance` -> Mapper -> `m_pScanBufferMaximumScanDistance` -> ScanManager -> `m_RunningBufferMaximumDistance` -->
+`scan_buffer_maximum_scan_distance` -> Mapper -> `m_pScanBufferMaximumScanDistance` -> ScanManager -> `m_RunningBufferMaximumDistance`
+`use_scan_matching` -> `m_pUseScanMatching`
+-->
 
 </div>
 
@@ -279,12 +312,16 @@ As I talked about above, MCSM uses a triple for-loop to loop over the given x, y
 <!-- used in the OccupancyGrid class, in UpdateCell -->
 <!-- although i don't know where this OccupancyGrid class gets used -->
 
-Questions
+<div markdown="1" class="sub-block x-urgent med-top-m med-bot-m">
+
+#### Questions
 
 - Why is the correlation grid blurred after each point from a scan is added, and not after all points are added, or even all scans are added?
     - `m_pCorrelationGrid->SmearPoint(gridPoint);`
 - What is the difference between `pSearchSpaceProbs` and `pCorrelationGrid`?
 - [ScanMatcher::Create](http://docs.ros.org/en/noetic/api/open_karto/html/classkarto_1_1ScanMatcher.html) is a static class method... why not just use a constructor?
+
+</div>
 
 <!-- `correlation_search_space_dimension` -> Mapper -> `m_pCorrelationSearchSpaceDimension`
 
@@ -306,7 +343,7 @@ m_pSequentialScanMatcher = ScanMatcher::Create(this,
 <div class="title_xsmall">coarse_angle_resolution, coarse_search_angle_offset, fine_search_angle_offset, use_response_expansion</div>
 <hr class="small">
 
-These values are used in the yaw for-loop of MCSM to define the range of possible rotations to explore and the step size.
+These values are used in the yaw for-loop of MCSM to define the range of possible rotations to explore and the step size. The parameters are defined in radians, although I talk in degrees below for simplicity.
 
 1. An offset of 15 degrees would mean poses 15 degrees each way would be scored: a 30 degree range in total.
 
@@ -316,10 +353,14 @@ These values are used in the yaw for-loop of MCSM to define the range of possibl
 
 4. Unlike the translational offsets and resolutions, the angle offsets and resolutions are shared between both the sequential and loop matching scan matchers.
 
+<div markdown="1" class="sub-block x-urgent med-top-m med-bot-m">
+
 Questions
 - what defines a sufficient match? AKA how can the `bestResponse` be 0.0, each translation must have *some* score.
 - When running `use_response_expansion` loops, maybe add functitionality to not re-search the inner range?
 - Why is a `fine_search_angle_offset` parameter given? Once a coarse maximum score is found, don't we know that best score must be somewhere within the `coarse_angle_resolution` (and this is why `fineSearchOffset(coarseSearchResolution * 0.5)`, aka for translation, the offset is set to the resolution since we know the best score must be within the pixel)?
+
+</div>
 
 <!-- These values feel like they should belong to ScanMatcher (they are often used with the above attributes, search space dimension/resolution/smear) (since they are only used in ScanMatch functions), but [ScanMatcher](http://docs.ros.org/en/noetic/api/open_karto/html/classkarto_1_1ScanMatcher.html) is provided by Karto and the constructor requires a Mapper, `m_pMapper`. So we don't have the flexibility to move them over anyways. -->
 
@@ -332,18 +373,30 @@ Questions
 
 
 <div markdown="1" class="sub-block neutral large-top-m">
-<div class="title">Loop Closing</div>
+<div class="title">Chains and Loop Closing</div>
 <div class="title_xsmall">do_loop_closing, loop_match_minimum_chain_size, loop_match_maximum_variance_coarse, loop_match_minimum_response_coarse, loop_match_minimum_response_fine</div>
 <hr class="small">
 
-<!-- where are the correlation/visual odometry counterparts to these? I don't think there is any, these are in TryCloseLoop, and these seem to be guards on wether a match is good enough to close a loop  -->
+Loop closing, as shown in the image above, makes SLAM powerful because it corrects error accumulated over time. Without loop closing, SLAM just becomes a fancy dead-reckoning system.
 
+<div markdown="1" class="sub-block x-urgent med-top-m med-bot-m">
+
+Questions/TODO:
+- I need to better understand chains
+
+</div>
+
+<!-- loop_match_minimum_chain_size -> Mapper -> m_pLoopMatchMinimumChainSize -->
+<!-- loop_search_maximum_distance -> Mapper -> m_pLoopSearchMaximumDistance -->
 <!-- loop_match_maximum_variance_coarse -> m_pLoopMatchMaximumVarianceCoarse -->
 <!-- loop_match_minimum_response_coarse -> m_pLoopMatchMinimumResponseCoarse -->
+<!-- link_match_minimum_response_fine -> Mapper -> m_pLinkMatchMinimumResponseFine
+link_scan_maximum_distance -> Mapper -> m_pLinkScanMaximumDistance -->
 
-<!-- link_match_minimum_response_fine
-link_scan_maximum_distance
-loop_search_maximum_distance -->
+<!-- Methods -->
+<!-- MapperGraph::FindNearChains -->
+<!-- MapperGraph::FindPossibleLoopClosure -->
+<!-- MapperGraph::TryCloseLoop -->
 
 </div>
 
@@ -354,9 +407,23 @@ loop_search_maximum_distance -->
 <div class="title_xsmall">minimum_distance_penalty, minimum_angle_penalty</div>
 <hr class="small">
 
-<!-- motion model of scan matcher starting on line 671. Part of the response from parallel computing that gets added to the correlation grid -->
+During the scoring of transformations within the triple for-loop of CSM, the motion model of the scan matcher penalizes transformations that are further from the inital guess made by odometry.
 
-<!-- `distance_variance_penalty` -> `m_pDistanceVariancePenalty`
+$$
+\displaylines {
+    \text{penalty} = 1 - \frac{\text{squaredDistance}}{\text{variancePenalty}}
+    \\
+    \\ \text{clippedPenalty} = \text{max}(\text{penalty}, \text{minimumPenalty})
+    \\
+    \\ \text{score} = \text{observationModelScore} * \text{clippedPenalty}
+}
+$$
+
+So this penalty is bounded between the minimum and 1 (as long as the variance penalty is not negative), and it scales the response of the score found via scan matching in `GetResponse`.
+
+This motion model is not used for the loop closure scan matcher (`doPenalize` is set to false).
+
+<!-- `distance_variance_penalty` -> Mapper -> `m_pDistanceVariancePenalty`
 `angle_variance_penalty` -> `m_pAngleVariancePenalty`
 `minimum_angle_penalty` -> `m_pMinimumAnglePenalty`
 `minimum_distance_penalty` -> `m_pMinimumDistancePenalty` -->
@@ -368,7 +435,7 @@ loop_search_maximum_distance -->
 
 
 
-### Graph SLAM Theory
+<!-- ### Graph SLAM Theory -->
 
 
 
