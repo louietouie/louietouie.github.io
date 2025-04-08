@@ -169,7 +169,7 @@ The loop matcher searches more broadly for similar scans to close loops when the
 
 #### ICP
 
-ICP is a common [point cloud registration][10] technique used in robots. One common ICP use-case is to estimate the pose of a known object in an environment (by matching a model of the object to a lidar or stereo pointcloud of the environment). However, ICP is an iterative optimization technique, and is susceptible to poor initial guesses. In the case of SLAM, if the initial guess provided by wheel odometry and IMU data is inaccurate, it is likely for ICP to get stuck in a local minimum. This is because the cost-landscape of aligning two pointclouds is very non-convex.
+ICP is a common [point cloud registration][10] technique used in robots. One common ICP use-case is to estimate the pose of a known object in an environment (by matching a model of the object to a lidar or stereo pointcloud of the environment). However, ICP is an iterative optimization technique, and is susceptible to poor initial guesses. In the case of SLAM, if the initial guess provided by wheel odometry and IMU data is inaccurate, it is likely for ICP to get stuck in a local minimum. This is because the cost-landscape of aligning two pointclouds is very non-convex. SLAM Toolbox does not use ICP, but instead CSM.
 
 <hr class="medium">
 
@@ -310,7 +310,7 @@ When the static method `ScanMatcher::Create` is called, one of the member variab
 
 #### Scan Match Translation Search
 
-As I talked about above, MCSM uses a triple for-loop to loop over the given x, y, and yaw ranges in step sizes based on given resolutions. As you will see in the box below, for yaw, these ranges and resolutions can be explicitly defined by the user. However, for x and y, the range and resolution of the search is determined by the size (`search_space_dimension`) and resolution (`...search_space_resolution`) of the correlation grid itself in `ScanMatcher::MatchScan`. The coarse resolution is hardcoded to be twice that of the fine resolution.
+As I talked about above, MCSM uses a triple for-loop to loop over the given x, y, and yaw ranges in step sizes based on given resolutions. As you will see in the box below, for yaw, these ranges and resolutions can be explicitly defined by the user. However, for x and y, the range and resolution of the search is determined by the size (`...search_space_dimension`) and resolution (`...search_space_resolution`) of the correlation grid itself in `ScanMatcher::MatchScan`. The coarse resolution is hardcoded to be twice that of the fine resolution.
 
 <div markdown="1" class="sub-block x-urgent med-top-m med-bot-m">
 
