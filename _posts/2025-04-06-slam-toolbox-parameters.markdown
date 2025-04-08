@@ -297,16 +297,14 @@ Scan matching can also be completely turned of with `use_scan_matching`. Without
 
 
 <div markdown="1" class="sub-block neutral med-top-m">
-<div class="title">Scan Match Lookup Table</div>
+<div class="title">Scan Match Correlation Grid</div>
 <div class="title_xsmall">correlation_search_space_dimension, correlation_search_space_resolution, correlation_search_space_smear_deviation</div>
 <div class="title_xsmall">loop_search_space_dimension, loop_search_space_resolution, loop_search_space_smear_deviation</div>
 <hr class="small">
 
-In scan matching, the ROS2 [LaserScan][8] messages themselves do not form the map and scan. Instead, the messages are transformed into grids, which are cropped and blurred versions of the original messages. This is done in `ScanMatcher::AddScan`, where the scans are iterated over, and the corresponding cells in the `m_pCorrelationGrid` are marked as occupied. I think of the correlation grid as a grayscale image aggregation of historical scans.
+In scan matching, the ROS2 [LaserScan][8] messages themselves do not form the map and scan. Instead, the messages are transformed into grids, which are cropped and blurred versions of the original messages. This is done in `ScanMatcher::AddScan`, where the scans are iterated over, and the corresponding cells in the `m_pCorrelationGrid` are marked as occupied. I think of the correlation grid as a grayscale image aggregation of historical scans. These parameters are used to define the size, resolution, and blurriness of the correlation grid.
 
-Each `ScanMatcher` takes these three values as inputs into the static `Create` method, and they influence the dimensions and attributes of the `ScanMatcher`'s `CorrelationGrid` and `Grid` member variables.
-
-When the static method `ScanMatcher::Create` is called, one of the member variables is `pCorrelationGrid`. So `correlation_search_space_dimension` defines the map size (how much cropping is done), and `correlation_search_space_smear_deviation` describes how much map blurring is done for the `m_pSequentialScanMatcher`. The other two parameters do the same for the `m_pLoopScanMatcher`. The number of cells in the grid is not actually `...search_space_dimension` itself, but the `...search_space_dimension` / `...search_space_resolution` (plus some additional padding).
+When the static method `ScanMatcher::Create` is called, one of the created member variables is `pCorrelationGrid`. For the `m_pSequentialScanMatcher` correlation grid, `correlation_search_space_dimension` defines the map size (how much cropping is done), and `correlation_search_space_smear_deviation` describes how much map blurring is done. The other two parameters do the same for the `m_pLoopScanMatcher`. The number of cells in the grid is not actually `...search_space_dimension` itself, but the `...search_space_dimension` / `...search_space_resolution` (plus some additional padding).
 
 #### Scan Match Translation Search
 
