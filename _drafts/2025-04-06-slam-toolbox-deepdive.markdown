@@ -12,9 +12,11 @@ categories: jekyll update
 
 
 
-This [popular SLAM Paper][2] says that *"SLAM systems require extensive parameter tuning in order to work correctly for a given scenario."* I struggled through this when setting up SLAM Toolbox with Gazebo. Using the default parameters, the algorithm failed to find loop closures in my simulated environment. SLAM Toolbox has [well-documented descriptions][20] of each parameter, but given the large number of parameters, I had trouble deciding which parameters to tune first, and understanding how each parameter affected the end result.
+> "SLAM systems require extensive parameter tuning in order to work correctly for a given scenario." <sup>3</sup>
+ 
+I struggled through this when setting up SLAM Toolbox with Gazebo. Using the default parameters, the algorithm failed to find loop closures in my simulated environment. SLAM Toolbox has [well-documented descriptions][20] of each parameter, but given the large number of parameters, I had trouble understanding which parameters to tune first and how changes would affect the end result.
 
-I spent some time learning the algorithms used in SLAM Toolbox and the purpose of each parameter. Afterwards, I was able to create a cleaner map by tuning the default parameters to my use-case, as shown below.
+After learning the algorithms used in SLAM Toolbox, I was able to create a cleaner map by tuning the default parameters to my use-case, as shown below.
 
 ![Long Exposure Laser Square Drawn by Robot](/assets/images/slam_parameters/beforeafter.png)
 
@@ -25,7 +27,7 @@ I spent some time learning the algorithms used in SLAM Toolbox and the purpose o
 
 
 
-### SLAM Toolbox uses Graph SLAM
+<!-- ### SLAM Toolbox uses Graph SLAM
 
 [PPF of SLAM Paper][2]
 
@@ -37,13 +39,13 @@ I spent some time learning the algorithms used in SLAM Toolbox and the purpose o
 - Everything below refers to GRAPH SLAM.
 
 <hr style = "margin-top: 4rem">
-<br /><br />
+<br /><br /> -->
 
 
 
 
 
-### SLAM Toolbox's SLAM is Dense
+<!-- ### SLAM Toolbox's SLAM is Dense
 
 [PPF of SLAM Paper][2]
 
@@ -55,7 +57,7 @@ I spent some time learning the algorithms used in SLAM Toolbox and the purpose o
     - SIFT, ORB, SURF
 
 <hr style = "margin-top: 4rem">
-<br /><br />
+<br /><br /> -->
 
 
 
@@ -71,9 +73,9 @@ I spent some time learning the algorithms used in SLAM Toolbox and the purpose o
 
 The SLAM node is subscribed to the `/tf` topic, where it listens for transforms from odom_frame -> base_frame provided by a seperate odometry node. For me, I'm using the ekf_node provided by the robot_localization package, which takes in IMU and wheel encoder measurements to estimate the robot's position.
 
-**Frame Ordering:** slam_toolbox orders its frames to follow [REP105][12]. Because tf2 requires that transforms be connected in a tree, the base_frame cannot have two parents (map and odom). This also intuitively makes sense; if we want to use forward kinematics to calculate the pose of a frame with respect to one of its ancestors, but there are two paths between the two frames, we might have two disagreeing transforms. Instead, a map_frame -> odom_frame transform is created, which can be described as the correction for the drift of the odometry over time. Because the odometry transformations are often published at a much higher rate than the map updates, a second benefit of ordering the frames from map_frame -> odom_frame -> base_frame is that our map_frame -> base_frame now has the benefits of the fast and continuous odometry updates, and the slower non-continuous error-correction benefits provided by the map.
+**Frame Ordering:** slam_toolbox orders its frames to follow [REP105][12]. Because tf2 requires that transforms be connected in a tree, the base_frame cannot have two parents (map and odom). This also intuitively makes sense; if we want to use forward kinematics to calculate the pose of a frame with respect to one of its ancestors, but there are two paths between the two frames, we might have two disagreeing transforms. Instead, a map_frame -> odom_frame transform is created, which can be described as the correction for the drift of the odometry over time. Because the odometry transformations are often published at a much higher rate than the map updates, a second benefit of ordering the frames from map_frame -> odom_frame -> base_frame is that our map_frame -> base_frame now has the benefits of both the fast and continuous odometry updates and the slower non-continuous error-correction benefits provided by the map.
 
-**Calculating map_frame -> odom_frame:** Test
+<!-- **Calculating map_frame -> odom_frame:** Test -->
 
 <div markdown="1" class="sub-block x-urgent med-top-m">
 
@@ -120,8 +122,9 @@ This topic is how slam_toolbox recieves the [LaserScan][14] messages. These mess
 
 
 
-<div markdown="1" class="sub-block neutral med-top-m large-bot-m">
-<div class="title_small">minimum_time_interval, minimum_travel_distance, minimum_travel_heading</div>
+<div markdown="1" class="sub-block neutral med-top-m medium-bot-m">
+<div class="title">Scan Filtering</div>
+<div class="title_xsmall">minimum_time_interval, minimum_travel_distance, minimum_travel_heading</div>
 <hr class="small">
 
 These parameters affect when a laser scan is processed and added to the pose graph.
@@ -145,9 +148,9 @@ In summary, these parameters limit the number of scans that make it into the pos
 - The documentation mentions that `minimum_time_interval` is for syncronous mode only, but it seems to be used in asynchronous mode [too](https://github.com/SteveMacenski/slam_toolbox/blob/191cdb52d7816a6f2e1f4986d7e5085deb55690e/src/slam_toolbox_async.cpp#L57).
 
 </div>
-
 </div>
 
+<hr class="medium">
 
 
 
@@ -289,7 +292,7 @@ Scan matching can also be completely turned of with `use_scan_matching`. Without
 
 
 
-<div markdown="1" class="sub-block neutral large-top-m">
+<div markdown="1" class="sub-block neutral med-top-m">
 <div class="title">Scan Match Lookup Table</div>
 <div class="title_xsmall">correlation_search_space_dimension, correlation_search_space_resolution, correlation_search_space_smear_deviation</div>
 <div class="title_xsmall">loop_search_space_dimension, loop_search_space_resolution, loop_search_space_smear_deviation</div>
@@ -316,11 +319,11 @@ As I talked about above, MCSM uses a triple for-loop to loop over the given x, y
 - what is rangeThreshold in `ScanMatcher::Create`
 
 </div>
-
 </div>
 
 
-<!-- <div markdown="1" class="sub-block neutral large-top-m large-bot-m">
+
+<!-- <div markdown="1" class="sub-block neutral med-top-m large-bot-m">
 <div class="title">Grid Creation</div>
 <div class="title_xsmall">min_pass_through, occupancy_threshold</div>
 <hr class="small">
@@ -333,7 +336,8 @@ As I talked about above, MCSM uses a triple for-loop to loop over the given x, y
 <!-- although i don't know where this OccupancyGrid class gets used -->
 
 
-<div markdown="1" class="sub-block neutral large-top-m large-bot-m">
+
+<div markdown="1" class="sub-block neutral med-top-m">
 <div class="title">Scan Match Angle Search</div>
 <div class="title_xsmall">coarse_angle_resolution, coarse_search_angle_offset, fine_search_angle_offset, use_response_expansion</div>
 <hr class="small">
@@ -353,7 +357,8 @@ These values are used in the yaw for-loop of MCSM to define the range of possibl
 Questions
 - what defines a sufficient match? AKA how can the `bestResponse` be 0.0, each translation must have *some* score.
 - When running `use_response_expansion` loops, maybe add functitionality to not re-search the inner range?
-- Why is a `fine_search_angle_offset` parameter given? Once a coarse maximum score is found, don't we know that best score must be somewhere within the `coarse_angle_resolution` (and this is why `fineSearchOffset(coarseSearchResolution * 0.5)`, aka for translation, the offset is set to the resolution since we know the best score must be within the pixel)?
+- Why is a `fine_search_angle_offset` parameter given? Once a coarse maximum score is found, don't we know that best score must be somewhere within the `coarse_angle_resolution`?
+    - and this is why `fineSearchOffset(coarseSearchResolution * 0.5)`, aka for translation, the offset is set to the resolution since we know the best score must be within the pixel
 
 </div>
 
@@ -362,7 +367,34 @@ Questions
 </div>
 
 
-<div markdown="1" class="sub-block neutral large-top-m">
+
+<div markdown="1" class="sub-block neutral med-top-m">
+<div class="title">Scan Match Motion Model</div>
+<div class="title_xsmall">distance_variance_penalty, angle_variance_penalty</div>
+<div class="title_xsmall">minimum_distance_penalty, minimum_angle_penalty</div>
+<hr class="small">
+
+During the scoring of transformations within the triple for-loop of CSM, the motion model of the scan matcher penalizes transformations that are further from the inital guess made by odometry.
+
+$$
+\displaylines {
+    \text{penalty} = 1 - \frac{\text{squaredDistance}}{\text{variancePenalty}}
+    \\
+    \\ \text{clippedPenalty} = \text{max}(\text{penalty}, \text{minimumPenalty})
+    \\
+    \\ \text{score} = \text{observationModelScore} * \text{clippedPenalty}
+}
+$$
+
+So this penalty is bounded between the minimum and 1 (as long as the variance penalty is not negative), and it scales the response of the score found via scan matching in `GetResponse`.
+
+This motion model is not used for the loop closure scan matcher (`doPenalize` is set to false).
+
+</div>
+
+
+
+<div markdown="1" class="sub-block neutral med-top-m large-bot-m">
 <div class="title">Chains and Loop Closing</div>
 <div class="title_xsmall">do_loop_closing, loop_match_minimum_chain_size, loop_match_maximum_variance_coarse, loop_match_minimum_response_coarse, loop_match_minimum_response_fine</div>
 <hr class="small">
@@ -391,30 +423,6 @@ link_scan_maximum_distance -> Mapper -> m_pLinkScanMaximumDistance -->
 
 </div>
 
-
-<div markdown="1" class="sub-block neutral large-top-m large-bot-m">
-<div class="title">Scan Match Motion Model</div>
-<div class="title_xsmall">distance_variance_penalty, angle_variance_penalty</div>
-<div class="title_xsmall">minimum_distance_penalty, minimum_angle_penalty</div>
-<hr class="small">
-
-During the scoring of transformations within the triple for-loop of CSM, the motion model of the scan matcher penalizes transformations that are further from the inital guess made by odometry.
-
-$$
-\displaylines {
-    \text{penalty} = 1 - \frac{\text{squaredDistance}}{\text{variancePenalty}}
-    \\
-    \\ \text{clippedPenalty} = \text{max}(\text{penalty}, \text{minimumPenalty})
-    \\
-    \\ \text{score} = \text{observationModelScore} * \text{clippedPenalty}
-}
-$$
-
-So this penalty is bounded between the minimum and 1 (as long as the variance penalty is not negative), and it scales the response of the score found via scan matching in `GetResponse`.
-
-This motion model is not used for the loop closure scan matcher (`doPenalize` is set to false).
-
-</div>
 
 
 
@@ -574,6 +582,7 @@ B. `if (!HasMovedEnough(pScan, pLastScan))*`
 
 1. Liu, Haiqiao, et al. “Correlation scan matching algorithm based on multi‐resolution auxiliary historical point cloud and lidar simultaneous localisation and mapping positioning application.” *IET Image Processing*, vol. 14, no. 14, 14 Oct. 2020, pp. 3596–3601, https://doi.org/10.1049/iet-ipr.2019.1657.
 2. Olson, E.B. “Real-Time Correlative Scan Matching.” *2009 IEEE International Conference on Robotics and Automation,* May 2009, https://doi.org/10.1109/robot.2009.5152375.
+3. Cadena, Cesar, et al. “Past, Present, and Future of Simultaneous Localization And Mapping: Towards the Robust-Perception Age.” *IEEE Transactions on Robotics*, 19 June 2016. 
 
 
 
