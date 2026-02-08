@@ -56,9 +56,12 @@ Unlike the hardware, the software is still in need of some large improvements. O
     - One idea I have is having a multi-hypothesis model, each which guess a difference bounce time, and scoring which fit best.
 2. Reposition cameras to be stacked vertically behind the robot so the trajectory can be recorded longer
 3. The robot looks drunk, which I think may improve if I change from position control to torque control. I need to actually quantify this using ros bag recordings, but I believe that the robot is not reaching its goal positons. I am sending it positions at the time I want it there, and it is never able to keep up with the position commands. I think if I instead use torque or velocity control in combination with a PID controller, I can then control it to follow the ideal trajectory. I'm not sure yet if my reasoning here is sound...
+    - **Future Note:** The robot is reaching the goal positions (as shown by the chart below), but I forgot to update the elbow joint's gear ratio set (from 3.8 to 5) after replacing the elbow, so the joint never reached its full position.
 4. The MPC controller could be revisited.
 5. The robot seems to always start it's forward swing about 0.5 seconds too late. I don't know why yet.
+6. Compensate for the delay between when the commands are sent and when the robot reaches the position
 
+<img src="/assets/images/hardware_upgrades/joint_command_cross_correlation.png" alt="Controls for elbow and wrist" class="image-center"/>
 
 [1]: https://github.com/odriverobotics/ros_odrive
 [2]: https://docs.odriverobotics.com/v/latest/manual/control.html#trajectory-control
